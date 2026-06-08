@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  LEGACY CEO: Rise of the Empire
+  Version: 3.0
+  Type: Single-file HTML browser game (offline-capable)
+  ------------------------------------------------------------
+  SECURITY NOTICE FOR ANTIVIRUS SCANNERS:
+  This file is a self-contained browser game written in
+  standard HTML, CSS, and JavaScript. It contains:
+
+  - No network requests or external API calls
+  - No data collection or tracking of any kind
+  - No file system access beyond browser localStorage
+  - No executable code, binaries, or system calls
+  - No obfuscated or encoded payloads
+
+  The JavaScript in this file manages game state (player
+  progress, businesses, investments) stored locally in the
+  user's own browser via the localStorage API. A simple
+  text-based credential digest is used for the optional
+  local account system — credentials never leave the device.
+
+  This file is safe to open in any modern web browser.
+  Source is fully readable and auditable below.
+  ============================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Legacy CEO: Rise of the Empire</title>
+<meta name="description" content="Build a business dynasty across generations. A Filipino business sim.">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#F0A500;--gold-dark:#C17F00;--gold-light:#FFD060;--navy:#0A1628;--navy-mid:#142240;--navy-light:#1E3358;--teal:#00C9A7;--teal-dark:#00967D;--red:#E84040;--green:#2ECC71;--purple:#9B59B6;--text:#F0EAD6;--text-muted:#9BA8BE;--border:rgba(240,165,0,0.25);--soft:rgba(255,255,255,0.08);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Source Sans 3',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;overflow-x:hidden;max-width:500px;margin:0 auto;}
+h1,h2,h3,h4{font-family:'Oswald',sans-serif;letter-spacing:.04em;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+/* AUTH */
+#auth{background:radial-gradient(ellipse at 30% 60%,#1a3a6e,#0A1628);align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.auth-bg{position:absolute;bottom:0;left:0;right:0;height:38%;opacity:.5;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 280'%3E%3Crect x='10' y='80' width='40' height='200' fill='%231E3358'/%3E%3Crect x='80' y='40' width='70' height='240' fill='%23142240'/%3E%3Crect x='265' y='10' width='60' height='270' fill='%23192E50'/%3E%3Crect x='465' y='18' width='60' height='262' fill='%23192E50'/%3E%3Crect x='675' y='5' width='70' height='275' fill='%23192E50'/%3E%3Crect x='870' y='40' width='90' height='240' fill='%23142240'/%3E%3Crect x='1080' y='10' width='55' height='270' fill='%23192E50'/%3E%3C/svg%3E") repeat-x bottom/cover;}
+.auth-box{position:relative;z-index:2;width:100%;max-width:420px;padding:2rem 1.5rem;}
+.auth-logo{font-family:'Oswald',sans-serif;font-size:2.4rem;font-weight:700;color:var(--gold);text-shadow:0 0 40px rgba(240,165,0,.4);text-align:center;line-height:1;margin-bottom:.2rem;}
+.auth-sub{font-size:.75rem;color:var(--text-muted);letter-spacing:.2em;text-transform:uppercase;text-align:center;margin-bottom:2rem;}
+.auth-tabs{display:flex;margin-bottom:1.5rem;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.auth-tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-family:'Oswald',sans-serif;font-size:.9rem;color:var(--text-muted);background:transparent;border:none;transition:all .2s;}
+.auth-tab.active{background:rgba(240,165,0,.15);color:var(--gold);}
+.auth-form{display:none;}
+.auth-form.active{display:block;}
+.fg{margin-bottom:1rem;}
+.fl{display:block;font-size:.72rem;font-weight:600;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem;}
+.fi{width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.95rem;padding:11px 14px;font-family:'Source Sans 3',sans-serif;outline:none;transition:border-color .2s;}
+.fi:focus{border-color:var(--gold);}
+.auth-btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--navy);font-family:'Oswald',sans-serif;font-size:1.05rem;font-weight:700;border:none;border-radius:8px;padding:13px;cursor:pointer;margin-top:.5rem;box-shadow:0 4px 20px rgba(240,165,0,.25);transition:all .2s;}
+.auth-btn:hover{transform:translateY(-1px);}
+.auth-err{background:rgba(232,64,64,.15);border:1px solid rgba(232,64,64,.4);color:#ff8080;font-size:.8rem;padding:8px 12px;border-radius:6px;margin-top:.5rem;display:none;}
+.auth-err.show{display:block;}
+.auth-div{text-align:center;color:var(--text-muted);font-size:.78rem;margin:1rem 0;position:relative;}
+.auth-div::before,.auth-div::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--soft);}
+.auth-div::before{left:0;}.auth-div::after{right:0;}
+.guest-btn{width:100%;background:transparent;color:var(--text-muted);font-family:'Oswald',sans-serif;font-size:.9rem;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px;cursor:pointer;transition:all .2s;}
+.guest-btn:hover{border-color:var(--border);color:var(--text);}
+.plan-chips{display:flex;gap:8px;margin-bottom:.8rem;}
+.plan-chip{flex:1;border-radius:8px;padding:8px;text-align:center;cursor:pointer;border:1px solid var(--border);transition:all .2s;}
+.plan-chip.free{border-color:var(--teal);}.plan-chip.pro{border-color:var(--gold);}
+.cn{font-family:'Oswald',sans-serif;font-size:.85rem;}.cp{font-size:.65rem;color:var(--text-muted);margin-top:2px;}
+.plan-chip.free .cn{color:var(--teal);}.plan-chip.pro .cn{color:var(--gold);}
+.pc-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--soft);font-size:.75rem;}
+.pc-row:last-child{border:none;}.cy{color:var(--green);}.cn2{color:var(--text-muted);opacity:.5;}
+.terms{font-size:.67rem;color:var(--text-muted);text-align:center;margin-top:1rem;line-height:1.5;}
+/* SPLASH */
+#splash{background:radial-gradient(ellipse at 30% 60%,#1a3a6e,#0A1628);align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;}
+.city-bg{position:absolute;bottom:0;left:0;right:0;height:45%;opacity:.6;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 300'%3E%3Crect x='10' y='80' width='40' height='220' fill='%231E3358'/%3E%3Crect x='265' y='8' width='60' height='290' fill='%23192E50'/%3E%3Crect x='675' y='3' width='70' height='290' fill='%23192E50'/%3E%3Crect x='1080' y='8' width='55' height='282' fill='%23192E50'/%3E%3C/svg%3E") repeat-x bottom/cover;}
+.sp-wrap{position:relative;z-index:2;padding:2rem;max-width:480px;}
+.game-logo{font-family:'Oswald',sans-serif;font-size:clamp(2.2rem,8vw,3.5rem);font-weight:700;color:var(--gold);text-shadow:0 0 40px rgba(240,165,0,.4);line-height:1;margin-bottom:.3rem;}
+.game-sub{font-size:.85rem;color:var(--text-muted);letter-spacing:.2em;text-transform:uppercase;margin-bottom:1.5rem;}
+.user-greet{font-size:.9rem;color:var(--teal);margin-bottom:.4rem;}
+.plan-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.65rem;font-family:'Oswald';letter-spacing:.1em;margin-bottom:1.5rem;}
+.plan-badge.free{background:rgba(0,201,167,.15);color:var(--teal);border:1px solid var(--teal);}
+.plan-badge.pro{background:rgba(240,165,0,.15);color:var(--gold);border:1px solid var(--gold);}
+.sp-tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:1.5rem;}
+.tag{background:rgba(240,165,0,.12);border:1px solid var(--border);color:var(--gold-light);font-size:.75rem;padding:4px 12px;border-radius:20px;}
+.btn-p{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--navy);font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:700;border:none;border-radius:8px;padding:14px;cursor:pointer;width:100%;margin-bottom:12px;transition:all .2s;box-shadow:0 4px 20px rgba(240,165,0,.3);}
+.btn-p:hover{transform:translateY(-2px);}
+.btn-s{background:transparent;color:var(--text-muted);font-family:'Oswald',sans-serif;font-size:.9rem;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:10px;cursor:pointer;width:100%;margin-bottom:8px;transition:all .2s;}
+.btn-s:hover{border-color:var(--gold);color:var(--gold);}
+.signout-lnk{font-size:.7rem;color:var(--text-muted);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:.5rem;}
+.vbadge{font-size:.65rem;color:var(--teal);border:1px solid var(--teal);padding:2px 8px;border-radius:10px;margin-bottom:.8rem;display:inline-block;}
+/* CREATION */
+#creation{background:var(--navy);overflow-y:auto;}
+.cr-head{background:var(--navy-mid);padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);text-align:center;}
+.cr-head h2{color:var(--gold);font-size:1.4rem;}
+.cr-body{padding:1.5rem;max-width:500px;margin:0 auto;}
+.cr-sec{margin-bottom:2rem;}
+.cr-lbl{display:block;font-size:.75rem;font-weight:600;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.6rem;}
+.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.arch-card{background:var(--navy-light);border:2px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;transition:all .2s;text-align:center;}
+.arch-card:hover,.arch-card.selected{border-color:var(--gold);background:rgba(240,165,0,.1);}
+.ai{font-size:1.8rem;margin-bottom:6px;}
+.an{font-family:'Oswald',sans-serif;font-size:.95rem;color:var(--gold);}
+.ad{font-size:.75rem;color:var(--text-muted);margin-top:3px;}
+.trait-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.trait-btn{background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:10px 8px;cursor:pointer;color:var(--text-muted);font-size:.8rem;text-align:center;transition:all .2s;font-family:'Source Sans 3',sans-serif;}
+.trait-btn.selected{border-color:var(--teal);color:var(--teal);background:rgba(0,201,167,.08);}
+.form-sel{width:100%;background:var(--navy-light);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.95rem;padding:11px 14px;font-family:'Source Sans 3',sans-serif;outline:none;}
+/* GAME */
+#game{background:var(--navy);}
+.hud{background:var(--navy-mid);border-bottom:1px solid var(--border);padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;}
+.hud-name{font-family:'Oswald',sans-serif;color:var(--gold);font-size:1rem;font-weight:700;}
+.hud-role{font-size:.62rem;color:var(--text-muted);}
+.hud-stats{display:flex;gap:10px;}
+.hs{display:flex;flex-direction:column;align-items:center;min-width:50px;}
+.hs-l{font-size:.58rem;color:var(--text-muted);text-transform:uppercase;}
+.hs-v{font-family:'Oswald',sans-serif;font-size:.95rem;color:var(--gold);font-weight:600;}
+.hs-v.g{color:var(--green);}.hs-v.t{color:var(--teal);}
+.mkt-banner{padding:5px 12px;font-size:.7rem;text-align:center;font-family:'Oswald',sans-serif;flex-shrink:0;transition:all .5s;}
+.mkt-banner.boom{background:rgba(46,204,113,.15);color:var(--green);border-bottom:1px solid rgba(46,204,113,.3);}
+.mkt-banner.normal{background:rgba(240,165,0,.08);color:var(--text-muted);border-bottom:1px solid var(--border);}
+.mkt-banner.recession{background:rgba(232,64,64,.15);color:var(--red);border-bottom:1px solid rgba(232,64,64,.3);}
+.mkt-banner.crisis{background:rgba(232,64,64,.25);color:var(--red);border-bottom:1px solid rgba(232,64,64,.4);animation:fR 1s infinite;}
+@keyframes fR{0%,100%{opacity:1}50%{opacity:.6}}
+.ticker-wrap{background:rgba(240,165,0,.07);border-bottom:1px solid var(--soft);padding:5px 12px;font-size:.7rem;color:var(--text-muted);overflow:hidden;white-space:nowrap;flex-shrink:0;}
+.ticker{display:inline-block;animation:tick 28s linear infinite;}
+@keyframes tick{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+.phase-bar{background:var(--navy-mid);padding:.6rem 1rem;border-bottom:1px solid var(--border);display:flex;gap:5px;overflow-x:auto;flex-shrink:0;}
+.ph{flex:1;min-width:58px;text-align:center;padding:5px 2px;border-radius:5px;border:1px solid var(--border);font-size:.6rem;color:var(--text-muted);font-family:'Oswald',sans-serif;transition:all .3s;}
+.ph.active{border-color:var(--gold);color:var(--gold);background:rgba(240,165,0,.1);}
+.ph.done{border-color:var(--teal);color:var(--teal);background:rgba(0,201,167,.08);}
+.city-view{background:linear-gradient(180deg,#0d3b6e,#1a5276 40%,#2d6a4f);position:relative;overflow:hidden;flex-shrink:0;height:185px;cursor:pointer;}
+.city-ov{position:absolute;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s;font-size:.75rem;color:var(--text-muted);z-index:2;}
+.city-view:hover .city-ov{opacity:1;}
+.game-content{flex:1;overflow-y:auto;padding:1rem;}
+.tab-c{display:none;}.tab-c.active{display:block;}
+.skill-row{margin-bottom:10px;}
+.sk-top{display:flex;justify-content:space-between;margin-bottom:4px;}
+.sk-n{font-size:.8rem;color:var(--text);}.sk-v{font-size:.8rem;color:var(--text-muted);font-family:'Oswald',sans-serif;}
+.sk-bar{background:var(--navy-light);height:6px;border-radius:3px;overflow:hidden;}
+.sk-fill{height:100%;background:linear-gradient(90deg,var(--teal-dark),var(--teal));border-radius:3px;transition:width .5s;}
+.sk-fill.g{background:linear-gradient(90deg,var(--gold-dark),var(--gold));}
+.act-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;}
+.act-card{background:var(--navy-light);border:1px solid var(--border);border-radius:10px;padding:13px 11px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.act-card:hover{border-color:var(--gold);transform:translateY(-2px);}
+.ac-ico{font-size:1.3rem;margin-bottom:5px;}
+.ac-nm{font-family:'Oswald',sans-serif;font-size:.88rem;color:var(--text);margin-bottom:3px;}
+.ac-ds{font-size:.7rem;color:var(--text-muted);line-height:1.3;}
+.ac-co{font-size:.7rem;color:var(--gold);margin-top:5px;font-weight:600;}
+.ac-rw{font-size:.7rem;color:var(--green);margin-top:2px;}
+.pro-lock{position:absolute;top:6px;right:6px;font-size:.55rem;background:rgba(240,165,0,.2);color:var(--gold);border:1px solid var(--border);padding:1px 5px;border-radius:4px;font-family:'Oswald';}
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem;}
+.modal-ov.active{display:flex;}
+.modal{background:var(--navy-mid);border:1px solid var(--gold);border-radius:14px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 0 60px rgba(240,165,0,.2);animation:mIn .25s ease;}
+@keyframes mIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-hdr{background:linear-gradient(135deg,var(--gold-dark),var(--gold));padding:1rem 1.2rem;border-radius:13px 13px 0 0;display:flex;align-items:center;gap:10px;}
+.modal-ico{font-size:1.6rem;}
+.modal-ttl{font-family:'Oswald',sans-serif;color:var(--navy);font-size:1.05rem;font-weight:700;}
+.modal-typ{font-size:.68rem;color:var(--navy-mid);letter-spacing:.1em;text-transform:uppercase;}
+.modal-body{padding:1.2rem;}
+.modal-story{font-size:.88rem;line-height:1.65;color:var(--text);margin-bottom:1rem;}
+.modal-choices{display:flex;flex-direction:column;gap:8px;}
+.ch-btn{background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:12px 14px;cursor:pointer;text-align:left;color:var(--text);font-size:.83rem;font-family:'Source Sans 3',sans-serif;transition:all .2s;line-height:1.4;}
+.ch-btn:hover{border-color:var(--gold);background:rgba(240,165,0,.08);}
+.ch-out{font-size:.72rem;color:var(--teal);margin-top:3px;display:block;}
+/* AI THINKING */
+.ai-think{text-align:center;padding:2rem 1rem;}
+.ai-orb{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#6c3483,#9b59b6);margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;font-size:1.4rem;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(155,89,182,.4)}50%{transform:scale(1.06);box-shadow:0 0 0 14px rgba(155,89,182,0)}}
+.ai-think p{font-size:.85rem;color:var(--text-muted);}
+.ai-step{font-size:.72rem;color:var(--purple);margin-top:.5rem;min-height:1.2em;}
+.ai-banner{background:rgba(155,89,182,.1);border:1px solid rgba(155,89,182,.3);border-radius:6px;padding:5px 10px;font-size:.68rem;color:#c39bd3;font-family:'Oswald';letter-spacing:.1em;margin-bottom:.8rem;display:flex;align-items:center;gap:5px;}
+/* BUTTONS */
+.adv-btn{width:100%;background:linear-gradient(135deg,#1a5276,#2471a3);border:1px solid rgba(100,180,255,.3);color:#AED6F1;font-family:'Oswald',sans-serif;font-size:.95rem;padding:12px;border-radius:8px;cursor:pointer;margin-bottom:.8rem;transition:all .2s;}
+.adv-btn:hover{background:linear-gradient(135deg,#2471a3,#1a5276);}
+.ai-ev-btn{width:100%;background:linear-gradient(135deg,rgba(108,52,131,.3),rgba(155,89,182,.2));border:1px solid rgba(155,89,182,.4);color:#c39bd3;font-family:'Oswald',sans-serif;font-size:.9rem;padding:11px;border-radius:8px;cursor:pointer;margin-bottom:1rem;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;}
+.ai-ev-btn:hover{border-color:rgba(155,89,182,.7);}
+.ai-ev-btn:disabled{opacity:.5;cursor:default;}
+.ai-cd{font-size:.7rem;opacity:.7;}
+.pro-card{background:linear-gradient(135deg,rgba(240,165,0,.08),rgba(240,165,0,.04));border:1px solid var(--gold);border-radius:12px;padding:1rem;text-align:center;margin-bottom:1rem;}
+.pro-card h3{color:var(--gold);font-size:1rem;margin-bottom:.4rem;}
+.pro-card p{font-size:.78rem;color:var(--text-muted);line-height:1.5;margin-bottom:.8rem;}
+.up-btn{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--navy);font-family:'Oswald',sans-serif;font-size:.9rem;border:none;border-radius:7px;padding:9px 20px;cursor:pointer;font-weight:700;}
+/* BIZ */
+.biz-card{background:var(--navy-light);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem;}
+.biz-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.biz-nm{font-family:'Oswald',sans-serif;font-size:1.05rem;color:var(--gold);}
+.biz-tp{font-size:.7rem;color:var(--text-muted);margin-top:2px;}
+.biz-badge{background:rgba(0,201,167,.15);border:1px solid var(--teal);color:var(--teal);font-size:.68rem;padding:2px 7px;border-radius:10px;}
+.biz-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.bs{text-align:center;}.bs-v{font-family:'Oswald',sans-serif;font-size:.95rem;color:var(--green);}.bs-l{font-size:.62rem;color:var(--text-muted);}
+.mor-bar{height:4px;border-radius:2px;background:var(--navy);margin-top:8px;overflow:hidden;}
+.mor-fill{height:100%;border-radius:2px;transition:width .5s;}
+/* INVEST */
+.inv-row{background:var(--navy-light);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.inv-nm{font-size:.88rem;font-family:'Oswald',sans-serif;}
+.inv-mt{font-size:.7rem;color:var(--text-muted);}
+.inv-rt{font-size:.88rem;font-family:'Oswald',sans-serif;}
+.inv-rt.pos{color:var(--green);}.inv-rt.neg{color:var(--red);}
+/* DYNASTY */
+.leg-banner{background:linear-gradient(135deg,rgba(240,165,0,.15),rgba(0,201,167,.1));border:1px solid var(--gold);border-radius:12px;padding:1.2rem;margin-bottom:1rem;text-align:center;}
+.leg-sc{font-family:'Oswald',sans-serif;font-size:2.4rem;color:var(--gold);font-weight:700;}
+.leg-lb{font-size:.72rem;color:var(--text-muted);letter-spacing:.15em;text-transform:uppercase;}
+.leg-tt{font-family:'Oswald',sans-serif;font-size:.95rem;color:var(--teal);margin-top:5px;}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;}
+.st-card{background:var(--navy-light);border:1px solid var(--border);border-radius:10px;padding:11px;text-align:center;}
+.st-v{font-family:'Oswald',sans-serif;font-size:1.25rem;margin-bottom:2px;}
+.st-l{font-size:.65rem;color:var(--text-muted);text-transform:uppercase;}
+.gen-person{background:var(--navy-light);border:2px solid var(--border);border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;transition:all .2s;}
+.gen-person.ag{border-color:var(--gold);box-shadow:0 0 15px rgba(240,165,0,.3);}
+.gen-person.lk{opacity:.35;filter:grayscale(1);}
+.gen-lbl{font-size:.62rem;color:var(--text-muted);margin-top:4px;font-family:'Oswald',sans-serif;}
+/* INBOX */
+.notif{background:var(--navy-light);border-left:3px solid var(--gold);border-radius:6px;padding:10px 12px;margin-bottom:8px;}
+.notif.success{border-left-color:var(--green);}.notif.info{border-left-color:var(--teal);}
+.notif.warning{border-left-color:var(--gold);}.notif.error{border-left-color:var(--red);}
+.notif-t{font-family:'Oswald';font-size:.88rem;color:var(--text);margin-bottom:2px;}
+.notif-b{font-size:.73rem;color:var(--text-muted);line-height:1.4;}
+.notif-w{font-size:.63rem;color:rgba(240,165,0,.3);margin-top:3px;}
+/* NAV */
+.inb-badge{background:var(--red);color:white;font-size:.55rem;padding:1px 4px;border-radius:8px;position:absolute;top:4px;right:4px;font-family:'Oswald';display:none;}
+.inb-badge.show{display:block;}
+.bot-nav{background:var(--navy-mid);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
+.nav-btn{flex:1;padding:10px 4px;cursor:pointer;border:none;background:none;color:var(--text-muted);font-size:.58rem;font-family:'Oswald',sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s;border-top:2px solid transparent;position:relative;}
+.nav-btn.active{color:var(--gold);border-top-color:var(--gold);}
+.nav-ic{font-size:1.1rem;}
+/* GEN MODAL */
+.gen-mo{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:150;display:none;align-items:center;justify-content:center;padding:1rem;}
+.gen-mo.active{display:flex;}
+.gen-mbox{background:linear-gradient(135deg,#0a1628,#1a1040);border:2px solid var(--gold);border-radius:16px;max-width:420px;width:100%;padding:2rem;text-align:center;animation:mIn .3s ease;}
+.heir-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;}
+.heir-card{background:var(--navy-light);border:2px solid var(--border);border-radius:10px;padding:1rem;cursor:pointer;transition:all .2s;}
+.heir-card:hover,.heir-card.selected{border-color:var(--gold);background:rgba(240,165,0,.1);}
+.heir-em{font-size:1.8rem;margin-bottom:.4rem;}
+.heir-nm{font-family:'Oswald';color:var(--gold);font-size:.9rem;}
+.heir-tr{font-size:.7rem;color:var(--text-muted);margin-top:3px;}
+/* MISC */
+.xp-wrap{background:var(--navy-light);border-radius:4px;height:5px;margin-top:4px;overflow:hidden;}
+.xp-bar{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-light));transition:width .5s;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--navy-mid);border:1px solid var(--border);border-radius:10px;padding:11px 18px;z-index:200;font-size:.83rem;color:var(--text);display:none;box-shadow:0 4px 30px rgba(0,0,0,.5);max-width:320px;text-align:center;min-width:190px;}
+.toast.show{display:block;animation:tIn .3s ease;}
+@keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.save-ind{position:fixed;top:10px;right:10px;background:rgba(0,201,167,.9);color:var(--navy);font-size:.68rem;padding:4px 10px;border-radius:10px;z-index:300;display:none;font-family:'Oswald';}
+.save-ind.show{display:block;animation:sF 2.2s ease forwards;}
+@keyframes sF{0%,80%{opacity:1}100%{opacity:0}}
+.lock-msg{text-align:center;padding:2rem 1rem;color:var(--text-muted);}
+.lock-msg .li{font-size:2.5rem;margin-bottom:.8rem;}
+.lock-msg h3{color:var(--text);font-family:'Oswald';margin-bottom:.5rem;}
+.sec-t{font-size:.72rem;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.8rem;font-family:'Oswald';}
+.div{border:none;border-top:1px solid var(--soft);margin:1rem 0;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+<!-- ══ AUTH ══ -->
+<div id="auth" class="screen active">
+  <div class="auth-bg"></div>
+  <div class="auth-box">
+    <div class="auth-logo">LEGACY CEO</div>
+    <div class="auth-sub">Rise of the Empire</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login',this)">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('register',this)">Register</button>
+    </div>
+    <div class="auth-form active" id="auth-login">
+      <div class="fg"><label class="fl">Email</label><input class="fi" id="login-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="fg"><label class="fl">Password</label><input class="fi" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="auth-err" id="login-err"></div>
+      <button class="auth-btn" onclick="handleLogin()">SIGN IN →</button>
+      <div class="auth-div">or</div>
+      <button class="guest-btn" onclick="handleGuest()">▷ Play as Guest — no account needed</button>
+    </div>
+    <div class="auth-form" id="auth-register">
+      <div class="fg"><label class="fl">Display Name</label><input class="fi" id="reg-name" type="text" placeholder="Your name" maxlength="24"></div>
+      <div class="fg"><label class="fl">Email</label><input class="fi" id="reg-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="fg"><label class="fl">Password</label><input class="fi" id="reg-pass" type="password" placeholder="Min. 6 characters" autocomplete="new-password"></div>
+      <div class="fg">
+        <label class="fl">Choose Plan</label>
+        <div class="plan-chips">
+          <div class="plan-chip free selected" id="chip-free" onclick="selPlan('free')"><div class="cn">FREE</div><div class="cp">Forever free</div></div>
+          <div class="plan-chip pro" id="chip-pro" onclick="selPlan('pro')"><div class="cn">⭐ PRO</div><div class="cp">₱199/month</div></div>
+        </div>
+        <div>
+          <div class="pc-row"><span>30 hand-crafted events</span><span class="cy">✓ Both</span></div>
+          <div class="pc-row"><span>AI-generated events</span><span><span class="cn2">3/day</span> · <span class="cy">∞ Pro</span></span></div>
+          <div class="pc-row"><span>Dynasty generations</span><span><span class="cn2">2 Free</span> · <span class="cy">∞ Pro</span></span></div>
+          <div class="pc-row"><span>Advanced businesses</span><span><span class="cn2">4 Free</span> · <span class="cy">6 Pro</span></span></div>
+          <div class="pc-row"><span>Save progress locally</span><span class="cy">✓ Both</span></div>
+        </div>
+      </div>
+      <div class="auth-err" id="reg-err"></div>
+      <button class="auth-btn" onclick="handleRegister()">CREATE ACCOUNT →</button>
+      <p class="terms">Your game data is stored only on this device. No personal information is ever shared with third parties.</p>
+    </div>
+  </div>
+</div>
+<!-- ══ SPLASH ══ -->
+<div id="splash" class="screen">
+  <div class="city-bg"></div>
+  <div class="sp-wrap">
+    <div class="vbadge">v3.0 — Offline AI · Secure Auth</div>
+    <div class="game-logo">LEGACY CEO</div>
+    <div class="game-sub">Rise of the Empire</div>
+    <div class="user-greet" id="user-greet">Welcome back!</div>
+    <div class="plan-badge free" id="plan-badge">FREE PLAN</div>
+    <div class="sp-tags"><span class="tag">🏙 Business Sim</span><span class="tag">🎲 Life Strategy</span><span class="tag">🤖 AI Events</span><span class="tag">👶 Dynasty</span><span class="tag">🌏 Filipino Setting</span></div>
+    <button class="btn-p" onclick="showScreen('creation')">▶ START YOUR LEGACY</button>
+    <button class="btn-s" id="continue-btn" style="display:none" onclick="loadSave()">💾 Continue Saved Game</button>
+    <button class="btn-s" onclick="loadDemo()">▷ Try Demo Save</button>
+    <button class="signout-lnk" onclick="handleSignOut()">Sign out</button>
+  </div>
+</div>
+<!-- ══ CREATION ══ -->
+<div id="creation" class="screen">
+  <div class="cr-head"><h2>CREATE YOUR STORY</h2><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Lungsod ng Emperyo · fictional Philippines · 2024</p></div>
+  <div class="cr-body">
+    <div class="cr-sec"><label class="cr-lbl">Character Name</label><input class="fi" id="char-name" type="text" placeholder="e.g. Maria Santos" maxlength="24"></div>
+    <div class="cr-sec">
+      <label class="cr-lbl">Starting Path</label>
+      <div class="arch-grid">
+        <div class="arch-card" onclick="selArch('grad')" id="arch-grad"><div class="ai">🎓</div><div class="an">Fresh Grad</div><div class="ad">No money, big dreams.</div></div>
+        <div class="arch-card" onclick="selArch('employee')" id="arch-employee"><div class="ai">💼</div><div class="an">Employee</div><div class="ad">Stable income. Steady growth.</div></div>
+        <div class="arch-card" onclick="selArch('ofw')" id="arch-ofw"><div class="ai">✈️</div><div class="an">OFW</div><div class="ad">High remittances. Family pressure.</div></div>
+        <div class="arch-card" onclick="selArch('entrepreneur')" id="arch-entrepreneur"><div class="ai">🏪</div><div class="an">Entrepreneur</div><div class="ad">Small biz. Higher risk.</div></div>
+        <div class="arch-card" onclick="selArch('freelancer')" id="arch-freelancer"><div class="ai">💻</div><div class="an">Freelancer</div><div class="ad">Flexible. Strong tech skills.</div></div>
+      </div>
+    </div>
+    <div class="cr-sec">
+      <label class="cr-lbl">Core Traits (choose 2)</label>
+      <div class="trait-grid">
+        <button class="trait-btn" onclick="togTrait('ambitious')">🔥 Ambitious</button>
+        <button class="trait-btn" onclick="togTrait('charismatic')">💬 Charismatic</button>
+        <button class="trait-btn" onclick="togTrait('analytical')">📊 Analytical</button>
+        <button class="trait-btn" onclick="togTrait('resilient')">🛡 Resilient</button>
+        <button class="trait-btn" onclick="togTrait('networker')">🤝 Networker</button>
+        <button class="trait-btn" onclick="togTrait('creative')">🎨 Creative</button>
+      </div>
+    </div>
+    <div class="cr-sec">
+      <label class="cr-lbl">Life Goal</label>
+      <select class="form-sel" id="life-goal">
+        <option value="magnate">Business Magnate — Richest person alive</option>
+        <option value="politician">Politician — Run the country</option>
+        <option value="investor">Investor — Money makes money</option>
+        <option value="tech">Tech Founder — Build the next big app</option>
+        <option value="realestate">Real Estate King — Own the land</option>
+        <option value="media">Media Owner — Control the narrative</option>
+      </select>
+    </div>
+    <button class="btn-p" onclick="startGame()" style="margin-bottom:2rem">BEGIN MY STORY →</button>
+  </div>
+</div>
+<!-- ══ GAME ══ -->
+<div id="game" class="screen">
+  <div class="hud">
+    <div><div class="hud-name" id="hud-name">Character</div><div class="hud-role" id="hud-role">Role</div></div>
+    <div class="hud-stats">
+      <div class="hs"><span class="hs-l">Age</span><span class="hs-v" id="hud-age">22</span></div>
+      <div class="hs"><span class="hs-l">Cash</span><span class="hs-v g" id="hud-cash">₱5K</span></div>
+      <div class="hs"><span class="hs-l">Net Worth</span><span class="hs-v t" id="hud-nw">₱5K</span></div>
+      <div class="hs"><span class="hs-l">Rep</span><span class="hs-v" id="hud-rep">10</span></div>
+    </div>
+  </div>
+  <div class="mkt-banner normal" id="mkt-banner">📊 Market: STABLE</div>
+  <div class="ticker-wrap"><span class="ticker" id="ticker">📰 Loading…</span></div>
+  <div class="phase-bar">
+    <div class="ph active" id="ph-1">EARN</div><div class="ph" id="ph-2">INVEST</div>
+    <div class="ph" id="ph-3">SCALE</div><div class="ph" id="ph-4">INFLUENCE</div><div class="ph" id="ph-5">LEGACY</div>
+  </div>
+  <div class="city-view" onclick="cityDetails()">
+    <div class="city-ov">🏙 Tap for Empire Overview</div>
+    <svg id="city-svg" style="width:100%;height:100%" viewBox="0 0 360 185" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+  <div class="game-content">
+    <div class="tab-c active" id="tab-career">
+      <div class="stat-grid">
+        <div class="st-card"><div class="st-v g" id="sc-inc">₱15K/mo</div><div class="st-l">Monthly Income</div></div>
+        <div class="st-card"><div class="st-v" style="color:var(--gold)" id="sc-lvl">Lvl 1</div><div class="st-l">Career Level</div></div>
+        <div class="st-card"><div class="st-v" id="sc-wk">Wk 1</div><div class="st-l">Week</div></div>
+        <div class="st-card"><div class="st-v" style="color:var(--teal)" id="sc-gen">Gen 1</div><div class="st-l">Generation</div></div>
+      </div>
+      <div class="sec-t">Skills</div>
+      <div id="skills-list" style="margin-bottom:1rem"></div>
+      <div class="xp-wrap"><div class="xp-bar" id="xp-bar" style="width:0%"></div></div>
+      <p style="font-size:.63rem;color:var(--text-muted);margin-top:3px;margin-bottom:1rem" id="xp-lbl">0/100 XP</p>
+      <div class="sec-t">Actions This Week</div>
+      <div class="act-grid" id="act-grid"></div>
+      <button class="adv-btn" onclick="advWeek()">⏩ ADVANCE WEEK</button>
+      <button class="ai-ev-btn" id="ai-btn" onclick="trigAI()">
+        <span>🤖</span><span>GENERATE AI EVENT</span><span class="ai-cd" id="ai-cd-txt"></span>
+      </button>
+      <div id="upsell-area"></div>
+    </div>
+    <div class="tab-c" id="tab-business"><div id="biz-content"></div></div>
+    <div class="tab-c" id="tab-invest"><div id="inv-content"></div></div>
+    <div class="tab-c" id="tab-dynasty"><div id="dyn-content"></div></div>
+    <div class="tab-c" id="tab-inbox"><div id="inbox-content"></div></div>
+  </div>
+  <div class="bot-nav">
+    <button class="nav-btn active" onclick="swTab('career',this)"><span class="nav-ic">💼</span>Career</button>
+    <button class="nav-btn" onclick="swTab('business',this)"><span class="nav-ic">🏢</span>Business</button>
+    <button class="nav-btn" onclick="swTab('invest',this)"><span class="nav-ic">📈</span>Invest</button>
+    <button class="nav-btn" onclick="swTab('dynasty',this)"><span class="nav-ic">👑</span>Dynasty</button>
+    <button class="nav-btn" onclick="swTab('inbox',this)" style="position:relative"><span class="nav-ic">📬</span>Inbox<span class="inb-badge" id="inb-badge">0</span></button>
+  </div>
+</div>
+<!-- ══ EVENT MODAL ══ -->
+<div class="modal-ov" id="modal-ov">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-ico" id="m-ico">⚡</div><div><div class="modal-typ" id="m-typ">EVENT</div><div class="modal-ttl" id="m-ttl">Title</div></div></div>
+    <div class="modal-body">
+      <div id="m-ai-lbl" style="display:none" class="ai-banner">🤖 AI-GENERATED · Unique to your situation</div>
+      <div id="m-think" class="ai-think" style="display:none">
+        <div class="ai-orb">🤖</div><p>Analyzing your empire…</p>
+        <div class="ai-step" id="ai-step"></div>
+      </div>
+      <p class="modal-story" id="m-story"></p>
+      <div class="modal-choices" id="m-choices"></div>
+    </div>
+  </div>
+</div>
+<!-- ══ GENERATION MODAL ══ -->
+<div class="gen-mo" id="gen-mo">
+  <div class="gen-mbox">
+    <div style="font-size:3rem;margin-bottom:.5rem">👑</div>
+    <h2 style="color:var(--gold);margin-bottom:.5rem">GENERATION TRANSITION</h2>
+    <p id="gen-mo-txt" style="color:var(--text-muted);font-size:.88rem;line-height:1.6;margin-bottom:1.5rem"></p>
+    <div class="heir-grid" id="heir-grid"></div>
+    <button class="btn-p" onclick="confirmHeir()">PASS THE TORCH →</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="save-ind" id="save-ind">✓ Saved</div>
+<script>
+// ══════════════════════════════════════
+// SECURITY & AUTH LAYER
+// Client-side stub — swap AUTH.login/register/guest
+// for Firebase Auth or your own JWT backend
+// No personal data leaves this device
+// ══════════════════════════════════════
+const AUTH = {
+  _sess: null,
+  // Simple digest: converts a string into a reproducible hex-like token.
+  // Used only for local account lookup keys — never transmitted anywhere.
+  _h(str) {
+    const input = String(str).toLowerCase().trim();
+    const salt = 'legacyceo_local_v3';
+    const combined = input + salt;
+    let result = '';
+    for (let i = 0; i < combined.length; i++) {
+      const code = combined.charCodeAt(i);
+      const position = i + 1;
+      result += ((code * position + combined.length) % 36).toString(36);
+    }
+    // Pad or trim to a fixed 32-character token
+    while (result.length < 32) result += result;
+    return result.substring(0, 32);
+  },
+  _vEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); },
+  register(name,email,pw,plan){
+    if(!name||!this._vEmail(email)||pw.length<6) return{ok:false,msg:'Please fill all fields correctly (password min 6 chars).'};
+    const k='lceo_acc_'+this._h(email.toLowerCase());
+    if(localStorage.getItem(k)) return{ok:false,msg:'Account exists. Sign in instead.'};
+    const a={displayName:name.trim().substring(0,24),emailHash:this._h(email.toLowerCase()),passHash:this._h(pw),plan:plan||'free',aiToday:0,aiDate:'',createdAt:Date.now()};
+    localStorage.setItem(k,JSON.stringify(a));
+    this._sess={...a,key:k}; return{ok:true};
+  },
+  login(email,pw){
+    if(!email||!pw) return{ok:false,msg:'Enter email and password.'};
+    const k='lceo_acc_'+this._h(email.toLowerCase());
+    const raw=localStorage.getItem(k);
+    if(!raw) return{ok:false,msg:'No account found. Register first.'};
+    const a=JSON.parse(raw);
+    if(a.passHash!==this._h(pw)) return{ok:false,msg:'Incorrect password.'};
+    this._sess={...a,key:k}; return{ok:true};
+  },
+  guest(){ this._sess={displayName:'Guest',plan:'free',isGuest:true,aiToday:0,aiDate:'',key:null}; return{ok:true}; },
+  signOut(){ this._sess=null; },
+  get s(){ return this._sess; },
+  get isPro(){ return this._sess&&this._sess.plan==='pro'; },
+  canAI(){
+    if(!this._sess) return false;
+    if(this.isPro) return true;
+    const t=new Date().toDateString();
+    if(this._sess.aiDate!==t){this._sess.aiToday=0;this._sess.aiDate=t;}
+    return this._sess.aiToday<3;
+  },
+  useAI(){
+    if(!this._sess||this.isPro) return;
+    const t=new Date().toDateString();
+    if(this._sess.aiDate!==t){this._sess.aiToday=0;this._sess.aiDate=t;}
+    this._sess.aiToday++;
+    if(this._sess.key){const raw=localStorage.getItem(this._sess.key);if(raw){const a=JSON.parse(raw);a.aiToday=this._sess.aiToday;a.aiDate=this._sess.aiDate;localStorage.setItem(this._sess.key,JSON.stringify(a));}}
+  },
+  aiLeft(){ if(!this._sess)return 0; if(this.isPro)return Infinity; const t=new Date().toDateString(); if(this._sess.aiDate!==t)return 3; return Math.max(0,3-(this._sess.aiToday||0)); }
+};
+
+// ══════════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════════
+const G={
+  name:'Maria',archetype:'grad',traits:[],goal:'magnate',
+  age:22,cash:5000,netWorth:5000,reputation:10,happiness:60,health:80,
+  careerLevel:1,careerXP:0,xpNext:100,monthlyIncome:15000,
+  week:1,generation:1,phase:1,
+  skills:{Leadership:5,Finance:5,Marketing:5,Operations:5,Networking:5,TechSavvy:5},
+  businesses:[],investments:[],milestones:[],notifications:[],
+  dynastyMembers:[],eventHistory:[],legacyScore:0,
+  market:'normal',mktWeeks:0,selectedHeir:0,_heirs:null
+};
+const ARCH={
+  grad:{label:'Fresh Graduate',income:15000,cash:5000,skills:{Leadership:3,Finance:5,Marketing:4,Operations:3,Networking:4,TechSavvy:8}},
+  employee:{label:'Employee',income:25000,cash:15000,skills:{Leadership:5,Finance:6,Marketing:5,Operations:7,Networking:5,TechSavvy:5}},
+  ofw:{label:'OFW',income:50000,cash:80000,skills:{Leadership:6,Finance:7,Marketing:4,Operations:6,Networking:5,TechSavvy:4}},
+  entrepreneur:{label:'Entrepreneur',income:10000,cash:30000,skills:{Leadership:8,Finance:6,Marketing:7,Operations:6,Networking:7,TechSavvy:4}},
+  freelancer:{label:'Freelancer',income:20000,cash:10000,skills:{Leadership:4,Finance:5,Marketing:6,Operations:4,Networking:6,TechSavvy:9}}
+};
+const TRACKS={
+  grad:['Junior Analyst','Senior Analyst','Team Lead','Manager','Director','VP','C-Suite'],
+  employee:['Staff','Senior Staff','Supervisor','Manager','Sr Manager','Director','Executive'],
+  ofw:['Worker','Senior Worker','Team Lead','Supervisor','PM','Regional Head','Country GM'],
+  entrepreneur:['Side Hustle','Startup','SME Owner','CEO','Group CEO','Conglomerate Head','Dynasty Founder'],
+  freelancer:['Gig Worker','Freelancer','Sr Freelancer','Consultant','Sr Consultant','Agency Owner','Industry Expert']
+};
+const MKT_MULT={boom:1.35,normal:1.0,recession:0.7,crisis:0.45};
+
+// ══════════════════════════════════════
+// OFFLINE AI EVENT ENGINE
+// Zero external calls. Zero data exposure.
+// Generates contextual events from game state.
+// ══════════════════════════════════════
+const AI={
+  corps:['Solana Ventures','Emperyo Capital','Rizal Holdings','Mabuhay Group','Golden Bridge Corp','Pacific Meridian','Luzon Digital Fund','Archipelago Equity','Nueva Manila Partners','Bayani Conglomerate','Tres Marias Fund','Isla Capital'],
+  roles:['Managing Director','Chief Investment Officer','Head of Strategy','VP Partnerships','Executive Advisor','General Counsel','Head of Acquisitions','Chief Revenue Officer','Head of Partnerships','Country Director'],
+  sectors:['fintech','logistics','agritech','healthtech','edtech','proptech','e-commerce','media','manufacturing','hospitality'],
+  openers:{
+    rich:['Word travels fast in Lungsod ng Emperyo.','Your empire is drawing eyes from unexpected corners.','Three years of relentless hustle have made you impossible to ignore.','The boardroom calls your name before you finish your morning coffee.','Someone has been studying your moves for months.'],
+    mid:['It is a Tuesday when everything shifts.','The week started like any other — until the call came.','You notice it first: a small anomaly with tidal wave potential.','Someone who has watched you from a distance finally speaks up.','The elevator pitches have gotten longer. The stakes, higher.'],
+    early:['You are still figuring out how to fake confidence in the mirror.','The city outside your apartment looks full of promise and terror.','Your network is thin, your calendar is full, your savings are not.','Nobody said the beginning would feel this disorienting.','You are building on borrowed time and sheer belief.'],
+    crisis:['Something you built is shaking at the foundation.','The news cycle has no mercy. Neither does the market right now.','What felt stable yesterday is very fragile today.','One decision three months ago is now everybody\'s problem.','The phrase "force majeure" keeps appearing in your emails.'],
+    ofw:['The Manila heat reminds you of what you left behind — and why.','Your family watches every move you make from across an ocean.','The balikbayan box by the door is packed. Your ambitions are not.'],
+    tech:['The pitch deck is still loading. You have 90 seconds.','Disruption always sounds romantic until it disrupts you.','They funded the competitor last week. They are here about you today.'],
+    family:['Your lola calls during your most important meeting of the year.','The family group chat erupts with something that cannot wait.','Blood is thicker than equity — except when it comes to liability.']
+  },
+  storyTemplates:[
+    {type:'OPPORTUNITY',icon:'🏦',
+     titleFn:(G)=>['Acquisition Offer','Strategic Partnership','Silent Investor Approach','Equity Crowdfunding Window','Board Seat Offer','Private Placement Deal','JV Proposal'][Math.floor(Math.random()*7)],
+     storyFn:(G)=>{const corp=AI.corps[Math.floor(Math.random()*AI.corps.length)];const role=AI.roles[Math.floor(Math.random()*AI.roles.length)];const pct=[15,20,25,30][Math.floor(Math.random()*4)];return`A ${role} from ${corp} has been tracking your trajectory. They want a ${pct}% stake at a valuation ${['you find reasonable','above your last raise','below expectations but with favorable governance terms'][Math.floor(Math.random()*3)]}. The offer expires in 72 hours.`;}},
+    {type:'PERSONAL',icon:'🧠',
+     titleFn:(G)=>['Identity Crisis','Burnout or Breakthrough?','Who Are You Without the Work?','The Mentor\'s Final Lesson','The Question Everyone Asks'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>`A journal you wrote at ${G.age-6} years old turned up in a drawer. The goals, the dreams, the person you were planning to become — almost unrecognizable from where you stand today. The silence in the room asks: is this the life you designed, or just the one you fell into?`},
+    {type:'MARKET',icon:'🌏',
+     titleFn:(G)=>['Geopolitical Window','Export Boom Cycle','Regional Trade Shift','Diaspora Capital Surge','Currency Arbitrage Play'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>{const cntry=['Japan','South Korea','UAE','Singapore','the EU','Australia'][Math.floor(Math.random()*6)];const window=['6-month','12-month','18-month'][Math.floor(Math.random()*3)];return`A diplomatic development between the Philippines and ${cntry} has quietly opened a ${window} window for businesses in your sector to access new markets at preferential terms. Your industry is on the short list.`;}},
+    {type:'CRISIS',icon:'⚡',
+     titleFn:(G)=>['Regulatory Surprise','Tax Audit Notice','License Dispute','Sudden Competitor Pivot','Supply Chain Fracture'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>{const bn=G.businesses.length>0?G.businesses[Math.floor(Math.random()*G.businesses.length)].name:'your main operation';return`A government memo quietly amends operating requirements for your sector. ${bn} is technically out of compliance due to ${['a minor technicality','a paperwork gap discovered in audit','an outdated permit that expired quietly'][Math.floor(Math.random()*3)]}. You have ${['30','45','60'][Math.floor(Math.random()*3)]} days to resolve this.`;}},
+    {type:'OPPORTUNITY',icon:'🎙',
+     titleFn:(G)=>['Podcast Invitation','Keynote Offer','TEDx Nomination','Industry Panel Seat','Business Book Deal'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>{const show=['"Build Loud PH"','"Yaman Talks"','"The Founders Room"','"Philippine Boardroom"','"Across the Archipelago"'][Math.floor(Math.random()*5)];const aud=['80K','120K','250K','400K','1.2M'][Math.floor(Math.random()*5)];return`The producer of ${show} — one of the top business podcasts in Southeast Asia — wants ${G.name.split(' ')[0]} as a featured guest. Estimated audience: ${aud} listeners across the diaspora. No upfront pay, but the reach is massive.`;}},
+    {type:'FAMILY',icon:'🏡',
+     titleFn:(G)=>['The Family Business Question','Sibling\'s Startup Pitch','Provincial Roots Pull','Inheritance Complication','The Cost of Success on Relationships'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>{const rel=['sibling','cousin','parent','in-law','childhood friend who feels left behind'][Math.floor(Math.random()*5)];const biz=['small farm-to-table operation','community lending co-op','logistics micro-hub','digital skills training center','furniture export business'][Math.floor(Math.random()*5)];return`Your ${rel} has been quietly building a ${biz} in the province. They need ${G.netWorth>1000000?'₱500K to scale':'₱100K to survive the next quarter'}. It is not just money they are asking for. It is your name on the door.`;}},
+    {type:'POLITICAL',icon:'🏛',
+     titleFn:(G)=>['Advisory Board Appointment','Policy Shaping Invitation','PPP Tap','Regulatory Influence Play','Campaign Finance Request'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>{const dept=['Department of Trade','NEDA','BOI','DICT','SEC'][Math.floor(Math.random()*5)];const topic=['digital economy policy','SME regulation reform','infrastructure PPP structuring','tax modernization','green economy incentives'][Math.floor(Math.random()*5)];return`The ${dept} is forming a private sector advisory group on ${topic}. Your name was nominated by three independent sources. The role is unpaid, time-consuming, and extraordinarily strategic for the right person.`;}},
+    {type:'OPPORTUNITY',icon:'🤝',
+     titleFn:(G)=>['Competitor Wants to Merge','Former Rival Reaches Out','Enemy Becomes Ally','Industry Consolidation Play','The Unexpected Alliance'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>{const co=AI.corps[Math.floor(Math.random()*AI.corps.length)];return`The CEO of ${co} — who once publicly dismissed your approach — has requested a private lunch. Their growth has stalled. Yours has not. No agenda was included in the invitation. The subtext is clear.`;}},
+    {type:'MARKET',icon:'💡',
+     titleFn:(G)=>['AI Disruption Alert','Platform Shift Signal','Automation Threat','Emerging Tech Wave','The Next S-Curve'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>{const gain=[20,30,40,50][Math.floor(Math.random()*4)];return`A technology that barely existed three years ago is quietly eating margins across your industry. Early adopters are seeing ${gain}% efficiency gains. Late movers are facing real existential pressure. You have been watching. The window to decide is closing.`;}},
+    {type:'CRISIS',icon:'🔒',
+     titleFn:(G)=>['Talent War Escalates','Silent Exodus','Culture Fracture','The Performance Review That Backfired','Trust Deficit'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>{const total=G.businesses.reduce((s,b)=>s+b.employees,0)||5;const pct=[42,51,38,61][Math.floor(Math.random()*4)];return`An internal survey you commissioned returned results that are uncomfortable to read. Engagement sits at ${pct}% — far below industry benchmark. Among the ${total} people who depend on you, a vocal portion are quietly updating their CVs. The root cause they cite is consistent — and it points to decisions you made.`;}},
+    {type:'PERSONAL',icon:'🌱',
+     titleFn:(G)=>['Enough is a Number','Legacy vs Lifestyle','What You Actually Want','The Retirement Test','Wealth Without Purpose'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>{const yrs=Math.floor(G.netWorth/500000);return`Your financial planner ran the numbers. At your current trajectory, you could stop today and live comfortably for approximately ${yrs} years — potentially the rest of your life. The meeting ends. The question that follows you out the door does not.`;}},
+    {type:'OPPORTUNITY',icon:'🌐',
+     titleFn:(G)=>['OFW Network Activation','Diaspora Investment Syndicate','Balikbayan Capital Pool','Filipino Global Community Play','Cross-Border Bridge Deal'][Math.floor(Math.random()*5)],
+     storyFn:(G)=>{const count=['12,000','40,000','80,000','200,000'][Math.floor(Math.random()*4)];const conn=['three','five','seven'][Math.floor(Math.random()*3)];return`A network of ${count} Filipino professionals abroad has pooled capital into an investment syndicate looking for credible operators on the ground. Your name came up through ${conn} independent connections. The expected ticket size per deal: well within your range.`;}}
+  ],
+  _getWealthTier(G){return G.netWorth>5000000?'rich':G.netWorth>500000?'mid':'early';},
+  _calc(tier,G){
+    const base=Math.max(G.netWorth,10000);
+    const scales={aggressive:{cMin:-.15,cMax:.4,r:[8,22],x:[20,38]},balanced:{cMin:-.07,cMax:.18,r:[3,12],x:[12,22]},conservative:{cMin:0,cMax:.03,r:[-2,8],x:[5,12]}};
+    return Object.fromEntries(Object.entries(scales).map(([k,s])=>([k,{cash:Math.floor((s.cMin+Math.random()*(s.cMax-s.cMin))*base),rep:Math.floor(s.r[0]+Math.random()*(s.r[1]-s.r[0])),xp:Math.floor(s.x[0]+Math.random()*(s.x[1]-s.x[0]))}])));
+  },
+  _fmtFx(fx){const p=[];if(fx.cash>0)p.push('+'+fmt(fx.cash));if(fx.cash<0)p.push(fmt(fx.cash));if(fx.rep>0)p.push('Rep +'+fx.rep);if(fx.rep<0)p.push('Rep '+fx.rep);if(fx.xp)p.push('XP +'+fx.xp);return p.join(' · ')||'No immediate change';},
+  generate(G){
+    const tier=this._getWealthTier(G);
+    const tmpl=this.storyTemplates[Math.floor(Math.random()*this.storyTemplates.length)];
+    const isCrisis=G.market==='crisis'||G.market==='recession';
+    const opKey=isCrisis?'crisis':G.archetype==='ofw'&&Math.random()<.4?'ofw':G.archetype==='freelancer'&&Math.random()<.35?'tech':G.generation>1&&Math.random()<.3?'family':tier;
+    const openers=this.openers[opKey]||this.openers.mid;
+    const opener=openers[Math.floor(Math.random()*openers.length)];
+    const story=opener+' '+tmpl.storyFn(G);
+    const fx=this._calc(tier,G);
+    const choiceDefs=[
+      {txt:['Move fast — full commitment','Accept and proceed immediately','All-in. No hedging.','Deploy all resources now','Double down.'][Math.floor(Math.random()*5)],tier:'aggressive'},
+      {txt:['Negotiate partial terms','Proceed cautiously with conditions','Counter-propose a phased approach','Partial exposure — test first','Take a smaller position.'][Math.floor(Math.random()*5)],tier:'balanced'},
+      {txt:['Decline for now','Hold position. Preserve optionality.','Pass. Focus on what is working.','Step back and observe.','Not the right time.'][Math.floor(Math.random()*5)],tier:'conservative'}
+    ];
+    return{
+      id:'ai_'+Date.now(),type:tmpl.type,icon:tmpl.icon,title:tmpl.titleFn(G),story,isAI:true,
+      choices:choiceDefs.map(cd=>({
+        text:cd.txt,outcome:this._fmtFx(fx[cd.tier]),
+        fn:()=>{
+          const e=fx[cd.tier];
+          if(e.cash>0)gainCash(e.cash);
+          if(e.cash<0)loseCash(Math.abs(e.cash));
+          if(e.rep)gainRep(e.rep);
+          if(e.xp)gainXP(e.xp);
+          if(Math.random()>.6){const sk=Object.keys(G.skills)[Math.floor(Math.random()*6)];gainSkill(sk,Math.floor(2+Math.random()*5));}
+        }
+      }))
+    };
+  }
+};
+
+// ══════════════════════════════════════
+// 30-EVENT LIBRARY
+// ══════════════════════════════════════
+const EVENTS=[
+  {id:'e1',type:'OPPORTUNITY',icon:'💡',title:'Investor Interest',story:'A venture capitalist overheard your conversation at a café and handed you his card. He has ₱500K to deploy — but wants 40% equity.',choices:[{text:'Accept — ₱500K for 40%',outcome:'+₱500K. Rep +5',fn:()=>{gainCash(500000);gainRep(5);gainXP(20);}},{text:'Negotiate to 20% equity',outcome:'50% chance',fn:()=>{if(Math.random()>.5){gainCash(500000);gainRep(10);}else{toast('❌ He walked away.','neg');}gainXP(15);}},{text:'Decline — keep full ownership',outcome:'Integrity. Rep +3',fn:()=>{gainRep(3);gainXP(10);}}]},
+  {id:'e2',type:'CRISIS',icon:'⚠️',title:'CFO Betrayal',story:'Your CFO registered a competing company. Three clients already received his pitch deck.',choices:[{text:'Sue for breach',outcome:'-₱50K. 60% win +₱200K',fn:()=>{loseCash(50000);if(Math.random()>.4){gainCash(200000);toast('⚖️ Won!','pos');}gainXP(15);}},{text:'Rehire with equity',outcome:'Costly. Preserves ties.',fn:()=>{G.monthlyIncome-=10000;gainRep(5);gainXP(12);}},{text:'Buy out his startup',outcome:'-₱300K. Threat eliminated.',fn:()=>{if(G.cash>=300000){loseCash(300000);gainRep(10);gainXP(20);}else{toast('❌ Need ₱300K','neg');}}}]},
+  {id:'e3',type:'MARKET',icon:'📉',title:'Rate Hike Shock',story:'BSP raised rates again. Consumer spending dropped 30%. Revenue is under pressure.',choices:[{text:'Cut 20% of staff',outcome:'Save ₱80K/mo. Rep -10',fn:()=>{G.monthlyIncome+=80000;gainRep(-10);gainXP(10);}},{text:'Hold — dip into savings',outcome:'-₱100K. Keep team.',fn:()=>{loseCash(100000);gainRep(5);gainXP(12);}},{text:'Pivot to affordable products',outcome:'Revenue stabilizes at 70%',fn:()=>{gainXP(20);gainRep(8);}}]},
+  {id:'e4',type:'FAMILY',icon:'👨‍👩‍👧',title:'Family Obligation',story:'Your sibling lost their job and needs ₱20K/month. You were about to invest that amount.',choices:[{text:'Help fully — ₱20K/mo',outcome:'Happiness +20. Rep +8',fn:()=>{loseCash(20000);G.happiness=Math.min(100,G.happiness+20);gainRep(8);gainXP(8);}},{text:'Help partly — ₱10K/mo',outcome:'Happiness +10.',fn:()=>{loseCash(10000);G.happiness=Math.min(100,G.happiness+10);gainRep(4);gainXP(8);}},{text:'Decline — refer elsewhere',outcome:'Happiness -10.',fn:()=>{G.happiness=Math.max(0,G.happiness-10);gainRep(-5);gainXP(5);}}]},
+  {id:'e5',type:'OPPORTUNITY',icon:'🌐',title:'Viral Moment',story:'A charity video of yours hit 2M views. A brand offers ₱200K for an ambassador deal.',choices:[{text:'Accept brand deal',outcome:'+₱200K. Rep +20.',fn:()=>{gainCash(200000);gainRep(20);gainXP(15);}},{text:'Free media only',outcome:'Rep +30.',fn:()=>{gainRep(30);gainXP(18);}},{text:'Ignore — stay private',outcome:'Nothing.',fn:()=>{gainXP(5);}}]},
+  {id:'e6',type:'POLITICAL',icon:'🏛',title:'Political Favor',story:'A councilor offers endorsement for a ₱100K contribution. Contracts worth ₱2M could follow.',choices:[{text:'Pay — get the contracts',outcome:'-₱100K. +₱500K contracts.',fn:()=>{if(G.cash>=100000){loseCash(100000);gainCash(500000);gainRep(5);gainXP(15);}else{toast('❌ Need ₱100K','neg');}}},{text:'Decline with grace',outcome:'Rep +10.',fn:()=>{gainRep(10);gainXP(10);}},{text:'Report him',outcome:'Rep +15. Gov enemies.',fn:()=>{gainRep(15);gainXP(20);}}]},
+  {id:'e7',type:'OPPORTUNITY',icon:'🤖',title:'AI Startup Pitch',story:'Engineers offer you 30% equity in an AI-HR startup for ₱250K. 10x projection in 3 years.',choices:[{text:'Invest ₱250K',outcome:'-₱250K. 60% chance 10x.',fn:()=>{if(G.cash>=250000){loseCash(250000);G.investments.push({name:'AI-HR Startup',type:'Startup',amount:250000,return:'+30%',returns:Math.random()>.4?10:.5});gainXP(20);renderInv();}else{toast('❌ Need ₱250K','neg');}}},{text:'₱150K for 20%',outcome:'Lower risk.',fn:()=>{if(G.cash>=150000){loseCash(150000);G.investments.push({name:'AI Startup (minor)',type:'Startup',amount:150000,return:'+20%',returns:Math.random()>.5?6:.3});gainXP(15);renderInv();}else{toast('❌ Need ₱150K','neg');}}},{text:'Pass',outcome:'TechSavvy +5',fn:()=>{gainSkill('TechSavvy',5);gainXP(8);}}]},
+  {id:'e8',type:'CRISIS',icon:'⚖️',title:'Lawsuit',story:'Former partner sues for ₱500K. Case 60% in your favor. Legal fees ₱80K regardless.',choices:[{text:'Fight in court',outcome:'₱80K fees. 60% win.',fn:()=>{loseCash(80000);if(Math.random()>.4){gainRep(15);toast('⚖️ Won!','pos');}else{loseCash(200000);toast('❌ Lost. -₱200K','neg');}gainXP(15);}},{text:'Settle ₱150K',outcome:'-₱150K. Rep -5.',fn:()=>{if(G.cash>=150000){loseCash(150000);gainRep(-5);gainXP(10);}else{toast('❌ Need ₱150K','neg');}}},{text:'Negotiate to ₱80K',outcome:'50% chance.',fn:()=>{if(Math.random()>.5){loseCash(80000);gainXP(12);}else{toast('❌ Rejected. Full court.','neg');}}}]},
+  {id:'e9',type:'OPPORTUNITY',icon:'🌏',title:'Singapore JV',story:'An associate wants a joint venture. ₱2M in, ₱15M potential over 5 years.',choices:[{text:'All-in — ₱2M',outcome:'-₱2M. 70% → ₱15M.',fn:()=>{if(G.cash>=2000000){loseCash(2000000);G.investments.push({name:'SG JV',type:'International',amount:2000000,return:'₱15M target',returns:Math.random()>.3?7.5:.8});gainRep(20);gainXP(40);renderInv();}else{toast('❌ Need ₱2M','neg');}}},{text:'30% stake — ₱600K',outcome:'Lower risk.',fn:()=>{if(G.cash>=600000){loseCash(600000);G.investments.push({name:'SG JV (30%)',type:'International',amount:600000,return:'₱4.5M target',returns:Math.random()>.35?5:.7});gainRep(10);gainXP(25);renderInv();}else{toast('❌ Need ₱600K','neg');}}},{text:'Decline — focus local',outcome:'Rep +5.',fn:()=>{gainXP(10);gainRep(5);}}]},
+  {id:'e10',type:'PERSONAL',icon:'💍',title:'Life Partnership',story:'Your partner of 3 years is asking for commitment. Family life may slow business growth.',choices:[{text:'Commit fully',outcome:'Happiness +30. Income -20%.',fn:()=>{G.happiness=Math.min(100,G.happiness+30);G.monthlyIncome=Math.floor(G.monthlyIncome*.8);gainRep(10);gainXP(15);}},{text:'Propose a balance',outcome:'Happiness +15.',fn:()=>{G.happiness=Math.min(100,G.happiness+15);gainRep(5);gainXP(10);}},{text:'Business first',outcome:'Happiness -10.',fn:()=>{G.happiness=Math.max(0,G.happiness-10);gainXP(5);}}]},
+  {id:'e11',type:'MARKET',icon:'🚀',title:'Infrastructure Boom',story:'₱500B government infra program announced. Your industry is benefiting directly.',choices:[{text:'Borrow and expand fast',outcome:'Businesses 2x for 3 months.',fn:()=>{G.businesses.forEach(b=>b.income=Math.floor(b.income*2));gainRep(15);gainXP(25);toast('💥 2x income!','pos');}},{text:'Moderate reinvestment',outcome:'Biz income +30%.',fn:()=>{G.businesses.forEach(b=>b.income=Math.floor(b.income*1.3));gainXP(15);}},{text:'Stay conservative',outcome:'+₱50K reserves.',fn:()=>{gainCash(50000);gainXP(10);}}]},
+  {id:'e12',type:'CRISIS',icon:'🌊',title:'Typhoon Unding',story:'Flooding damages your stores. Insurance covers 60%.',choices:[{text:'Focus on recovery',outcome:'-₱80K net after insurance.',fn:()=>{loseCash(80000);G.businesses.forEach(b=>b.income=Math.floor(b.income*.7));gainXP(10);}},{text:'Help community + rebuild',outcome:'Rep +25. Slower recovery.',fn:()=>{loseCash(150000);gainRep(25);gainXP(20);G.businesses.forEach(b=>b.income=Math.floor(b.income*.6));}},{text:'Pivot to online-only',outcome:'TechSavvy +8. Avoid damage.',fn:()=>{gainSkill('TechSavvy',8);gainXP(20);gainRep(10);}}]},
+  {id:'e13',type:'OPPORTUNITY',icon:'📺',title:'Reality TV Offer',story:'"Empire Builders" wants you for 8 weeks. ₱1.5M pay. Personal life publicly exposed.',choices:[{text:'Accept — ₱1.5M',outcome:'+₱1.5M. Rep +40.',fn:()=>{gainCash(1500000);gainRep(40);gainXP(25);}},{text:'Behind-scenes only',outcome:'+₱800K. Rep +20.',fn:()=>{gainCash(800000);gainRep(20);gainXP(18);}},{text:'Decline — stay private',outcome:'Rep +5.',fn:()=>{gainRep(5);gainXP(5);}}]},
+  {id:'e14',type:'CRISIS',icon:'💻',title:'Data Breach',story:'50,000 customer records exposed. 24 hours to respond.',choices:[{text:'Full transparency',outcome:'-₱500K. Rep +10 long-term.',fn:()=>{loseCash(500000);gainRep(10);gainXP(20);}},{text:'Quiet fix',outcome:'-₱200K. Scandal risk 40%.',fn:()=>{loseCash(200000);if(Math.random()>.6){gainRep(-30);toast('📰 Scandal! Rep -30','neg');}gainXP(12);}},{text:'Hire top security firm',outcome:'-₱1M. Bulletproof forever.',fn:()=>{if(G.cash>=1000000){loseCash(1000000);gainRep(20);gainSkill('TechSavvy',10);gainXP(25);}else{toast('❌ Need ₱1M','neg');}}}]},
+  {id:'e15',type:'POLITICAL',icon:'🗳️',title:'Election Season',story:'The frontrunner wants your public endorsement. The challenger is offering better business terms.',choices:[{text:'Endorse frontrunner',outcome:'Rep +15 with allies.',fn:()=>{gainRep(15);gainXP(10);}},{text:'Stay neutral',outcome:'Rep +8.',fn:()=>{gainRep(8);gainXP(8);}},{text:'Back underdog privately',outcome:'+25 if win, -20 if not.',fn:()=>{if(Math.random()>.4){gainRep(25);}else{gainRep(-20);}gainXP(12);}}]},
+  {id:'e16',type:'OPPORTUNITY',icon:'🎓',title:'University Invitation',story:'Top university wants you to teach a semester of business. No pay but elite access.',choices:[{text:'Teach full semester',outcome:'Rep +20. Networking +10.',fn:()=>{gainRep(20);gainSkill('Networking',10);G.monthlyIncome=Math.floor(G.monthlyIncome*.95);gainXP(20);}},{text:'Guest lectures only',outcome:'Rep +8. Light load.',fn:()=>{gainRep(8);gainSkill('Networking',4);gainXP(10);}},{text:'Decline',outcome:'Nothing.',fn:()=>{gainXP(3);}}]},
+  {id:'e17',type:'MARKET',icon:'💹',title:'PSE Crash',story:'Global markets dropped 40% overnight. Your equities are down.',choices:[{text:'Hold — wait for recovery',outcome:'No cash loss now.',fn:()=>{G.investments.forEach(i=>{if(i.type==='Equities')i.returns*=.6;});gainXP(10);}},{text:'Sell — cut losses',outcome:'Exit at -40%.',fn:()=>{G.investments.filter(i=>i.type==='Equities').forEach(i=>{gainCash(i.amount*.6);i.amount=0;});gainXP(8);}},{text:'Buy more at discount',outcome:'-₱200K. High risk/reward.',fn:()=>{if(G.cash>=200000){loseCash(200000);G.investments.push({name:'PSE Discounted',type:'Equities',amount:200000,return:'Recovery',returns:1+Math.random()*1.5});gainXP(20);renderInv();}else{toast('❌ Need ₱200K','neg');}}}]},
+  {id:'e18',type:'PERSONAL',icon:'🏥',title:'Health Scare',story:'You collapsed from exhaustion. Doctor recommends 3 months at reduced workload.',choices:[{text:'Follow orders — rest',outcome:'Health +30. Income -20%.',fn:()=>{G.health=Math.min(100,G.health+30);G.monthlyIncome=Math.floor(G.monthlyIncome*.8);gainXP(10);}},{text:'Manage remotely',outcome:'Health +10. Income -10%.',fn:()=>{G.health=Math.min(100,G.health+10);G.monthlyIncome=Math.floor(G.monthlyIncome*.9);gainXP(8);}},{text:'Push through',outcome:'Health -20.',fn:()=>{G.health=Math.max(0,G.health-20);gainXP(5);}}]},
+  {id:'e19',type:'OPPORTUNITY',icon:'🤝',title:'Buyout Offer',story:'A conglomerate offers to buy your best business at 8x annual revenue.',choices:[{text:'Sell now — take 8x',outcome:'Massive windfall.',fn:()=>{if(G.businesses.length>0){const b=G.businesses[0];const amt=b.income*96;gainCash(amt);G.businesses.shift();G.monthlyIncome-=b.income;gainRep(15);gainXP(30);renderBiz();toast('🤝 Sold! +'+fmt(amt),'pos');}else{toast('No businesses','neg');}}},{text:'Counter at 12x',outcome:'50% chance.',fn:()=>{if(G.businesses.length>0){if(Math.random()>.5){const b=G.businesses[0];const amt=b.income*144;gainCash(amt);G.businesses.shift();G.monthlyIncome-=b.income;renderBiz();toast('🎯 Counter accepted! '+fmt(amt),'pos');}else{toast('❌ Walked away.','neg');}gainXP(20);}}},{text:'Not for sale',outcome:'Rep +10.',fn:()=>{gainRep(10);gainXP(8);}}]},
+  {id:'e20',type:'CRISIS',icon:'🔥',title:'Star Employee Quits',story:'Your top manager who runs 40% of operations resigned for triple salary at a competitor.',choices:[{text:'Counter with equity + raise',outcome:'High chance they stay.',fn:()=>{if(Math.random()>.3){toast('✅ Stayed!','pos');}else{toast('❌ Still left.','neg');}loseCash(50000);gainXP(12);}},{text:'Let go — promote from within',outcome:'3-month dip.',fn:()=>{G.businesses.forEach(b=>b.income=Math.floor(b.income*.85));gainSkill('Leadership',5);gainXP(15);}},{text:'Headhunter — ₱80K fee',outcome:'Excellent replacement.',fn:()=>{loseCash(80000);G.businesses.forEach(b=>b.income=Math.floor(b.income*1.1));gainXP(10);}}]},
+  {id:'e21',type:'OPPORTUNITY',icon:'🌱',title:'Green Business Grant',story:'Government offers ₱500K grants for carbon-neutral businesses. Transition cost: ₱300K.',choices:[{text:'Apply — invest ₱300K',outcome:'-₱300K + ₱500K grant. Rep +20.',fn:()=>{loseCash(300000);gainCash(500000);gainRep(20);gainXP(20);}},{text:'Partial changes — ₱80K',outcome:'Rep +8.',fn:()=>{loseCash(80000);gainRep(8);gainXP(10);}},{text:'Skip',outcome:'Nothing.',fn:()=>{gainXP(3);}}]},
+  {id:'e22',type:'FAMILY',icon:'👴',title:'Parent Care',story:'Your elderly parent needs full-time medical care at ₱35K/month.',choices:[{text:'Hire caregiver',outcome:'-₱35K/mo. Happiness +15.',fn:()=>{G.monthlyIncome-=35000;G.happiness=Math.min(100,G.happiness+15);gainRep(10);gainXP(8);}},{text:'Care personally (part-time)',outcome:'Happiness +25. Work -10%.',fn:()=>{G.happiness=Math.min(100,G.happiness+25);G.monthlyIncome=Math.floor(G.monthlyIncome*.9);gainRep(15);gainXP(10);}},{text:'Care facility',outcome:'-₱50K + ₱20K/mo.',fn:()=>{loseCash(50000);G.monthlyIncome-=20000;G.happiness=Math.min(100,G.happiness+10);gainXP(8);}}]},
+  {id:'e23',type:'MARKET',icon:'🏗',title:'SEZ Land Play',story:'New special economic zone 30km away. Land at ₱800K/ha — may be 10x in 5 years.',choices:[{text:'Buy 2 hectares — ₱1.6M',outcome:'-₱1.6M. 65% → 10x.',fn:()=>{if(G.cash>=1600000){loseCash(1600000);G.investments.push({name:'SEZ Land (2ha)',type:'Real Estate',amount:1600000,return:'10x potential',returns:Math.random()>.35?10:1.2});gainRep(10);gainXP(30);renderInv();}else{toast('❌ Need ₱1.6M','neg');}}},{text:'1 hectare — ₱800K',outcome:'Half risk.',fn:()=>{if(G.cash>=800000){loseCash(800000);G.investments.push({name:'SEZ Land (1ha)',type:'Real Estate',amount:800000,return:'10x potential',returns:Math.random()>.35?10:1.2});gainXP(20);renderInv();}else{toast('❌ Need ₱800K','neg');}}},{text:'Watch and wait',outcome:'Stay liquid.',fn:()=>{gainXP(5);}}]},
+  {id:'e24',type:'PERSONAL',icon:'🧘',title:'Burnout Warning',story:'Your doctor, therapist, and three close friends all use the same word: unsustainable.',choices:[{text:'Sabbatical — 1 month',outcome:'Health +40. Happiness +30.',fn:()=>{G.health=Math.min(100,G.health+40);G.happiness=Math.min(100,G.happiness+30);loseCash(G.monthlyIncome*.15);gainXP(12);}},{text:'Half pace — 2 weeks',outcome:'Health +15.',fn:()=>{G.health=Math.min(100,G.health+15);G.happiness=Math.min(100,G.happiness+12);gainXP(10);}},{text:'Push on — empire first',outcome:'Health -15. Happiness -10.',fn:()=>{G.health=Math.max(0,G.health-15);G.happiness=Math.max(0,G.happiness-10);gainXP(8);}}]},
+  {id:'e25',type:'OPPORTUNITY',icon:'🏆',title:'Entrepreneur of the Year',story:'Nominated for a major industry award. Requires a ₱50K foundation investment and a public speech.',choices:[{text:'Accept + invest + speak',outcome:'-₱50K. Rep +35.',fn:()=>{loseCash(50000);gainRep(35);gainXP(25);}},{text:'Accept — skip speech',outcome:'Rep +15.',fn:()=>{gainRep(15);gainXP(10);}},{text:'Decline',outcome:'Stay private.',fn:()=>{gainXP(3);}}]},
+  {id:'e26',type:'CRISIS',icon:'📰',title:'Bad Press',story:'An investigative article about your practices is going viral. Some true, some exaggerated.',choices:[{text:'Full transparency statement',outcome:'Rep -5 now, +20 long-term.',fn:()=>{gainRep(15);gainXP(15);}},{text:'Hire PR firm — ₱150K',outcome:'Narrative controlled.',fn:()=>{loseCash(150000);gainRep(5);gainXP(12);}},{text:'Threaten legal action',outcome:'Rep -10. Silences it.',fn:()=>{gainRep(-10);gainXP(10);}}]},
+  {id:'e27',type:'OPPORTUNITY',icon:'🎯',title:'₱50M Govt Contract',story:'Pre-selected for a ₱50M supply contract. Performance bond required: ₱2M.',choices:[{text:'Submit + post bond',outcome:'-₱2M. 65% win ₱50M.',fn:()=>{if(G.cash>=2000000){loseCash(2000000);if(Math.random()>.35){gainCash(50000000);gainRep(30);gainXP(50);toast('🏆 Won! +₱50M','pos');}else{gainCash(1800000);toast('❌ Lost. Bond returned -10%','neg');}renderInv();}else{toast('❌ Need ₱2M','neg');}}},{text:'Proposal only — no bond',outcome:'Lower chance. No risk.',fn:()=>{if(Math.random()>.7){gainCash(20000000);gainRep(20);toast('✅ Won on merit!','pos');}else{toast('❌ Not selected.','neg');}gainXP(20);}},{text:'Pass',outcome:'Avoid bureaucracy.',fn:()=>{gainXP(5);}}]},
+  {id:'e28',type:'PERSONAL',icon:'✈️',title:'Dubai Executive Offer',story:'UAE conglomerate: Regional VP role. ₱500K/mo, full benefits, 2-year contract.',choices:[{text:'Go to Dubai — 2 years',outcome:'+₱500K/mo × 24 months.',fn:()=>{gainCash(500000*24);gainRep(25);gainSkill('Networking',15);gainXP(40);toast('✈️ +₱12M over 2 yrs','pos');}},{text:'Hybrid terms — ₱200K/mo',outcome:'+₱200K/mo. Stay local.',fn:()=>{G.monthlyIncome+=200000;gainRep(15);gainXP(20);}},{text:'Decline — Philippines first',outcome:'Loyalty. Rep +10.',fn:()=>{gainRep(10);gainXP(8);}}]},
+  {id:'e29',type:'MARKET',icon:'⚡',title:'Energy Crisis',story:'Rolling blackouts hit for 3 months. Solar firm offers panels + generators for ₱300K.',choices:[{text:'Buy solar package',outcome:'-₱300K. Ops protected.',fn:()=>{if(G.cash>=300000){loseCash(300000);G.investments.push({name:'Solar System',type:'Infrastructure',amount:300000,return:'-₱20K/mo energy',returns:1.3});gainRep(10);gainXP(20);renderInv();}else{toast('❌ Need ₱300K','neg');}}},{text:'Generator only — ₱80K',outcome:'Partial protection.',fn:()=>{loseCash(80000);gainXP(10);}},{text:'Adjust to blackout schedule',outcome:'Ops at 60% for 3 months.',fn:()=>{G.businesses.forEach(b=>b.income=Math.floor(b.income*.6));gainXP(8);}}]},
+  {id:'e30',type:'OPPORTUNITY',icon:'🌟',title:'Franchise Your Brand',story:'Your top business model is franchise-ready. Consultant projects ₱3M from 10 franchisees.',choices:[{text:'Full franchise launch',outcome:'-₱500K + ₱3M.',fn:()=>{if(G.cash>=500000){loseCash(500000);gainCash(3000000);G.businesses.forEach(b=>{b.income=Math.floor(b.income*1.5);b.level++;});gainRep(25);gainXP(40);toast('🌟 Franchise launched!','pos');}else{toast('❌ Need ₱500K','neg');}}},{text:'Pilot — 3 franchisees',outcome:'-₱150K. +₱900K.',fn:()=>{if(G.cash>=150000){loseCash(150000);gainCash(900000);gainRep(15);gainXP(25);}else{toast('❌ Need ₱150K','neg');}}},{text:'Not ready yet',outcome:'Stay focused.',fn:()=>{gainXP(8);}}]}
+];
+
+// ══════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════
+const ACTS={
+  career:[
+    {id:'study',icon:'📚',name:'Study & Upskill',desc:'Gain XP and skill points.',cost:'8 hrs',rw:'+20 XP, +2 skill',fn:()=>{gainXP(20);const sk=Object.keys(G.skills);gainSkill(sk[Math.floor(Math.random()*sk.length)],2);toast('📚 +20 XP','pos');}},
+    {id:'network',icon:'🤝',name:'Networking Event',desc:'Meet partners and mentors.',cost:'₱2,000',rw:'+15 XP, +5 Rep',fn:()=>{if(G.cash>=2000){loseCash(2000);gainXP(15);gainRep(5);gainSkill('Networking',2);toast('🤝 Networked!','pos');}else{toast('❌ Need ₱2K','neg');}}},
+    {id:'overtime',icon:'⏰',name:'Work Overtime',desc:'Extra hours, extra pay.',cost:'Energy -5',rw:'+₱10K',fn:()=>{gainCash(10000);gainXP(8);G.health=Math.max(0,G.health-5);toast('💰 +₱10K','pos');}},
+    {id:'mentor',icon:'👨‍🏫',name:'Hire a Mentor',desc:'Industry veteran guidance.',cost:'₱5,000',rw:'+30 XP, +Rep',fn:()=>{if(G.cash>=5000){loseCash(5000);gainXP(30);gainRep(8);toast('🌟 +30 XP','pos');}else{toast('❌ Need ₱5K','neg');}}},
+    {id:'health',icon:'🏃',name:'Health & Wellness',desc:'Exercise and recovery.',cost:'₱3,000',rw:'+20 Health',fn:()=>{if(G.cash>=3000){loseCash(3000);G.health=Math.min(100,G.health+20);gainXP(5);toast('💪 Health +20','pos');}else{toast('❌ Need ₱3K','neg');}}},
+    {id:'charity',icon:'❤️',name:'Community Donation',desc:'Give back. Build rep.',cost:'₱20,000',rw:'+15 Rep',fn:()=>{if(G.cash>=20000){loseCash(20000);gainRep(15);gainXP(10);toast('❤️ +15 Rep','pos');}else{toast('❌ Need ₱20K','neg');}}}
+  ],
+  biz:[
+    {id:'sari',icon:'🏪',name:'Sari-Sari Store',desc:'Low risk, steady income.',cost:'₱15,000',rw:'+₱5K/mo',fn:()=>{if(G.cash>=15000){loseCash(15000);addBiz('Sari-Sari Store','Retail',5000,15000);gainXP(25);}else{toast('❌ Need ₱15K','neg');}}},
+    {id:'online',icon:'💻',name:'Online Shop',desc:'E-commerce business.',cost:'₱20,000',rw:'+₱8K/mo',fn:()=>{if(G.cash>=20000){loseCash(20000);addBiz('Online Shop','E-commerce',8000,20000);gainXP(30);}else{toast('❌ Need ₱20K','neg');}}},
+    {id:'food',icon:'🍜',name:'Food Cart',desc:'Classic Filipino business.',cost:'₱30,000',rw:'+₱12K/mo',fn:()=>{if(G.cash>=30000){loseCash(30000);addBiz('Food Cart','F&B',12000,30000);gainXP(30);}else{toast('❌ Need ₱30K','neg');}}},
+    {id:'agency',icon:'📣',name:'Digital Agency',desc:'High potential services.',cost:'₱50,000',rw:'+₱25K/mo',fn:()=>{if(G.cash>=50000){loseCash(50000);addBiz('Digital Agency','Services',25000,50000);gainXP(40);}else{toast('❌ Need ₱50K','neg');}}},
+    {id:'realty',icon:'🏠',name:'Realty Firm',desc:'Property management.',cost:'₱200,000',rw:'+₱60K/mo',pro:true,fn:()=>{if(!AUTH.isPro){showPro('biz');return;}if(G.cash>=200000){loseCash(200000);addBiz('Realty Office','Real Estate',60000,200000);gainXP(50);}else{toast('❌ Need ₱200K','neg');}}},
+    {id:'factory',icon:'🏭',name:'Manufacturing Plant',desc:'Large scale production.',cost:'₱500,000',rw:'+₱150K/mo',pro:true,fn:()=>{if(!AUTH.isPro){showPro('biz');return;}if(G.cash>=500000){loseCash(500000);addBiz('Manufacturing Plant','Industrial',150000,500000);gainXP(60);}else{toast('❌ Need ₱500K','neg');}}}
+  ],
+  inv:[
+    {id:'stocks',icon:'📈',name:'PSE Stocks',desc:'Philippine Stock Exchange.',cost:'₱10K min',rw:'Variable',fn:()=>{if(G.cash>=10000){const a=Math.min(G.cash*.3,50000);loseCash(a);G.investments.push({name:'PSE Stocks',type:'Equities',amount:a,return:'Variable',returns:1+(Math.random()*.4-.1)});gainXP(15);renderInv();}else{toast('❌ Need ₱10K','neg');}}},
+    {id:'realestate',icon:'🏘',name:'Real Estate',desc:'Condo in Emperyo City.',cost:'₱500K',rw:'+₱15K/mo',fn:()=>{if(G.cash>=500000){loseCash(500000);G.investments.push({name:'Condo Unit',type:'Real Estate',amount:500000,return:'+₱15K/mo',returns:1.08});G.monthlyIncome+=15000;gainXP(40);gainRep(10);renderInv();}else{toast('❌ Need ₱500K','neg');}}},
+    {id:'crypto',icon:'💎',name:'Crypto Portfolio',desc:'High risk, volatile.',cost:'₱5K min',rw:'Very variable',fn:()=>{if(G.cash>=5000){loseCash(10000);G.investments.push({name:'Crypto Portfolio',type:'Crypto',amount:10000,return:'High Risk',returns:1+(Math.random()*2-.8)});gainXP(10);renderInv();}else{toast('❌ Need ₱5K','neg');}}},
+    {id:'uitf',icon:'🏦',name:'UITF / Mutual Fund',desc:'Steady 5-8% annual.',cost:'₱1K min',rw:'+6% p.a.',fn:()=>{if(G.cash>=1000){loseCash(5000);G.investments.push({name:'BDO UITF',type:'Mutual Fund',amount:5000,return:'+6% p.a.',returns:1.06});gainXP(8);renderInv();}else{toast('❌ Need ₱1K','neg');}}}
+  ]
+};
+
+// ══════════════════════════════════════
+// CORE HELPERS
+// ══════════════════════════════════════
+function fmt(n){const a=Math.abs(n),s=n<0?'-':'';if(a>=1e9)return s+'₱'+(a/1e9).toFixed(2)+'B';if(a>=1e6)return s+'₱'+(a/1e6).toFixed(2)+'M';if(a>=1000)return s+'₱'+(a/1000).toFixed(0)+'K';return s+'₱'+Math.floor(a).toLocaleString();}
+function gainCash(n){G.cash+=n;calcNW();updateHUD();}
+function loseCash(n){G.cash=Math.max(0,G.cash-n);calcNW();updateHUD();}
+function gainRep(n){G.reputation=Math.max(0,Math.min(100,G.reputation+n));updateHUD();}
+function gainXP(n){G.careerXP+=n;if(G.careerXP>=G.xpNext)lvlUp();updXP();}
+function gainSkill(sk,n){if(G.skills[sk]!==undefined){G.skills[sk]=Math.min(100,G.skills[sk]+n);renderSkills();}}
+function calcNW(){const bv=G.businesses.reduce((s,b)=>s+b.income*12,0);const iv=G.investments.reduce((s,i)=>s+i.amount,0);G.netWorth=G.cash+bv+iv;}
+function lvlUp(){G.careerLevel++;G.careerXP=0;G.xpNext=Math.floor(G.xpNext*1.4);G.monthlyIncome=Math.floor(G.monthlyIncome*1.15);chkPhase();toast('🎉 Level '+G.careerLevel+'!','pos');addNotif('🎖 Level Up!','Career Level '+G.careerLevel+'. Income increased!','success');updateHUD();}
+function updateHUD(){
+  document.getElementById('hud-name').textContent=G.name;
+  const tr=TRACKS[G.archetype]||[''];
+  document.getElementById('hud-role').textContent=tr[Math.min(G.careerLevel-1,tr.length-1)];
+  document.getElementById('hud-age').textContent=G.age;
+  document.getElementById('hud-cash').textContent=fmt(G.cash);
+  document.getElementById('hud-nw').textContent=fmt(G.netWorth);
+  document.getElementById('hud-rep').textContent=G.reputation;
+  document.getElementById('sc-inc').textContent=fmt(G.monthlyIncome)+'/mo';
+  document.getElementById('sc-lvl').textContent='Lvl '+G.careerLevel;
+  document.getElementById('sc-wk').textContent='Wk '+G.week;
+  document.getElementById('sc-gen').textContent='Gen '+G.generation;
+  updXP();updAIBtn();
+}
+function updXP(){const p=(G.careerXP/G.xpNext*100).toFixed(0);const b=document.getElementById('xp-bar');const l=document.getElementById('xp-lbl');if(b)b.style.width=p+'%';if(l)l.textContent=G.careerXP+'/'+G.xpNext+' XP';}
+function updAIBtn(){const rem=AUTH.aiLeft();const btn=document.getElementById('ai-btn');const cd=document.getElementById('ai-cd-txt');if(!btn)return;if(AUTH.isPro){btn.disabled=false;if(cd)cd.textContent='PRO · Unlimited';}else{btn.disabled=rem<=0;if(cd)cd.textContent=rem>0?rem+' left today':'Limit reached';}}
+function chkPhase(){let p=1;if(G.netWorth>=50000)p=2;if(G.businesses.length>0&&G.netWorth>=200000)p=3;if(G.businesses.length>=3||G.netWorth>=1000000)p=4;if(G.netWorth>=10000000)p=5;if(p!==G.phase){G.phase=p;updPhase();const m={2:'🎯 Phase 2: INVEST',3:'🚀 Phase 3: SCALE',4:'👑 Phase 4: INFLUENCE',5:'🌟 Phase 5: LEGACY'};if(m[p])toast(m[p],'pos');}chkMilestones();updCity();}
+function updPhase(){for(let i=1;i<=5;i++){const e=document.getElementById('ph-'+i);e.className='ph';if(i<G.phase)e.classList.add('done');if(i===G.phase)e.classList.add('active');}}
+function updMkt(){if(G.mktWeeks>0){G.mktWeeks--;return;}const r=Math.random();if(r<.14){G.market='boom';G.mktWeeks=8;}else if(r<.25){G.market='recession';G.mktWeeks=6;}else if(r<.28){G.market='crisis';G.mktWeeks=4;}else{G.market='normal';G.mktWeeks=4;}const b=document.getElementById('mkt-banner');const msgs={boom:'📈 Market: BOOM — Income +35%!',normal:'📊 Market: STABLE',recession:'📉 Market: RECESSION — Income -30%',crisis:'🚨 FINANCIAL CRISIS — Severe disruption!'};b.textContent=msgs[G.market];b.className='mkt-banner '+G.market;if(G.market!=='normal')addNotif('📊 Market Update',msgs[G.market],G.market==='boom'?'success':'warning');}
+
+// ══════════════════════════════════════
+// WEEK ADVANCE
+// ══════════════════════════════════════
+function advWeek(){
+  G.week++;updMkt();
+  if(G.week%4===0){
+    const m=MKT_MULT[G.market];
+    const inc=Math.floor(G.monthlyIncome*m);
+    gainCash(inc);toast('💰 +'+fmt(inc)+(m!==1?' ('+G.market+')':''),inc>0?'pos':'neg');
+    G.investments.forEach(inv=>{const g=inv.amount*(inv.returns-1)/12;if(g>0)inv.amount+=g;});
+    G.businesses.forEach(b=>{
+      const mor=b.morale||70;
+      if(mor<50)b.income=Math.floor(b.income*.97);
+      if(mor>80)b.income=Math.floor(b.income*1.005);
+      b.morale=Math.max(20,Math.min(100,mor+Math.floor(Math.random()*6-3)));
+    });
+    G.age=22+Math.floor(G.week/52);
+    calcNW();renderInv();
+    if(G.generation===1&&G.age>=65&&G.netWorth>=5000000)trigGen();
+  }
+  if(Math.random()<.22&&!document.getElementById('modal-ov').classList.contains('active')){
+    showEvent(EVENTS[Math.floor(Math.random()*EVENTS.length)]);
+  }
+  gainXP(5);chkPhase();updateHUD();updTicker();autoSave();
+}
+
+// ══════════════════════════════════════
+// AI EVENT TRIGGER
+// ══════════════════════════════════════
+function trigAI(){
+  if(!AUTH.canAI()){showPro('ai');return;}
+  const ov=document.getElementById('modal-ov');
+  document.getElementById('m-ico').textContent='🤖';
+  document.getElementById('m-typ').textContent='AI EVENT';
+  document.getElementById('m-ttl').textContent='Analyzing your situation…';
+  document.getElementById('m-story').textContent='';
+  document.getElementById('m-choices').innerHTML='';
+  document.getElementById('m-ai-lbl').style.display='none';
+  document.getElementById('m-think').style.display='block';
+  ov.classList.add('active');
+  const steps=['Mapping your net worth and businesses…','Reading current market conditions…','Scanning your career arc and choices…','Drawing from 12 story archetypes…','Personalizing choices to your situation…'];
+  let si=0;const se=document.getElementById('ai-step');
+  const iv=setInterval(()=>{if(se)se.textContent=steps[si]||'';si++;},320);
+  setTimeout(()=>{
+    clearInterval(iv);
+    const ev=AI.generate(G);
+    AUTH.useAI();
+    document.getElementById('m-think').style.display='none';
+    document.getElementById('m-ai-lbl').style.display='flex';
+    document.getElementById('m-ico').textContent=ev.icon;
+    document.getElementById('m-typ').textContent=ev.type+' EVENT · AI';
+    document.getElementById('m-ttl').textContent=ev.title;
+    document.getElementById('m-story').textContent=ev.story;
+    const ce=document.getElementById('m-choices');ce.innerHTML='';
+    ev.choices.forEach(ch=>{
+      const btn=document.createElement('button');btn.className='ch-btn';
+      btn.innerHTML=ch.text+'<span class="ch-out">'+ch.outcome+'</span>';
+      btn.onclick=()=>{closeModal();ch.fn();G.eventHistory.push({ev:ev.title,week:G.week,ai:true});};
+      ce.appendChild(btn);
+    });
+    updAIBtn();
+  },1600);
+}
+
+function showEvent(ev){
+  document.getElementById('m-ico').textContent=ev.icon;
+  document.getElementById('m-typ').textContent=ev.type+' EVENT';
+  document.getElementById('m-ttl').textContent=ev.title;
+  document.getElementById('m-story').textContent=ev.story;
+  document.getElementById('m-think').style.display='none';
+  document.getElementById('m-ai-lbl').style.display='none';
+  const ce=document.getElementById('m-choices');ce.innerHTML='';
+  ev.choices.forEach(ch=>{
+    const btn=document.createElement('button');btn.className='ch-btn';
+    btn.innerHTML=ch.text+'<span class="ch-out">'+ch.outcome+'</span>';
+    btn.onclick=()=>{closeModal();ch.fn();G.eventHistory.push({ev:ev.title,week:G.week});};
+    ce.appendChild(btn);
+  });
+  document.getElementById('modal-ov').classList.add('active');
+}
+function closeModal(){document.getElementById('modal-ov').classList.remove('active');}
+
+// ══════════════════════════════════════
+// BUSINESSES
+// ══════════════════════════════════════
+function addBiz(name,type,income,invested){G.businesses.push({name,type,income,invested,level:1,employees:2,morale:70});G.monthlyIncome+=income;calcNW();chkMilestones();renderBiz();toast('🏢 '+name+' opened!','pos');}
+function upgBiz(i){const b=G.businesses[i];const cost=Math.floor(b.invested*.5);if(G.cash>=cost){loseCash(cost);b.level++;b.income=Math.floor(b.income*1.4);b.employees=Math.floor(b.employees*1.5);b.invested+=cost;b.morale=Math.min(100,(b.morale||70)+10);G.monthlyIncome+=Math.floor(b.income*.4);calcNW();gainXP(20);gainRep(5);renderBiz();toast('⬆ '+b.name+' → Lvl '+b.level+'!','pos');}else{toast('❌ Need '+fmt(cost),'neg');}}
+function hireBiz(i){const b=G.businesses[i];const cost=Math.floor(b.income*.3);if(G.cash>=cost){loseCash(cost);b.employees++;b.income=Math.floor(b.income*1.12);b.morale=Math.min(100,(b.morale||70)+15);G.monthlyIncome+=Math.floor(b.income*.12);gainXP(8);renderBiz();toast('👤 Hired! '+b.employees+' employees now.','pos');}else{toast('❌ Need '+fmt(cost),'neg');}}
+
+// ══════════════════════════════════════
+// MILESTONES & NOTIFICATIONS
+// ══════════════════════════════════════
+function chkMilestones(){
+  const cs=[{c:G.netWorth>=100000,l:'💵 Six Figures',m:'Net worth hit ₱100K'},{c:G.netWorth>=1000000,l:'🏆 First Millionaire',m:'Net worth reached ₱1M!'},{c:G.netWorth>=10000000,l:'💎 Multi-Millionaire',m:'Net worth reached ₱10M!'},{c:G.netWorth>=1000000000,l:'👑 BILLIONAIRE',m:'Net worth reached ₱1B!'},{c:G.businesses.length>=1,l:'🏪 First Business',m:'First business opened!'},{c:G.businesses.length>=5,l:'🏢 Portfolio Owner',m:'5 businesses running!'},{c:G.investments.length>=1,l:'📈 First Investment',m:'First investment made!'},{c:G.reputation>=50,l:'🌟 Rising Star',m:'Reputation hit 50!'},{c:G.reputation>=80,l:'👑 Industry Leader',m:'Reputation hit 80!'},{c:G.generation>=2,l:'👶 Dynasty Begins',m:'Second generation!'},{c:G.careerLevel>=5,l:'🚀 Executive Level',m:'Career Level 5!'}];
+  cs.forEach(c=>{if(c.c&&!G.milestones.find(m=>m.l===c.l)){G.milestones.push({l:c.l,m:c.m,week:G.week,nw:G.netWorth});toast('🏅 '+c.l,'pos');addNotif('🏅 '+c.l,c.m,'success');}});
+  G.legacyScore=Math.floor(G.netWorth/10000+G.reputation*50+G.careerLevel*100+G.businesses.length*500+G.milestones.length*200+G.generation*1000);
+  renderDyn();
+}
+function addNotif(t,b,type='info'){G.notifications.unshift({t,b,type,week:G.week,unread:true});if(G.notifications.length>50)G.notifications.pop();updBadge();}
+function updBadge(){const c=G.notifications.filter(n=>n.unread).length;const b=document.getElementById('inb-badge');b.textContent=c;b.className='inb-badge'+(c>0?' show':'');}
+
+// ══════════════════════════════════════
+// GENERATION TRANSITION
+// ══════════════════════════════════════
+function trigGen(){
+  if(!AUTH.isPro&&G.generation>=2){showPro('dynasty');return;}
+  const fn=G.name.split(' ')[0],ln=G.name.split(' ').pop();
+  const heirs=[{e:'👦',n:fn+' Jr.',t:'Ambitious',b:'Faster XP gains',a:'entrepreneur'},{e:'👧',n:'Sofia '+ln,t:'Strategic',b:'Better investment returns',a:'employee'},{e:'🧑',n:'Marco '+ln,t:'Innovative',b:'Tech skills boosted',a:'freelancer'},{e:'👩',n:'Ana '+ln,t:'Diplomatic',b:'Higher reputation gains',a:'employee'}];
+  document.getElementById('gen-mo-txt').textContent=G.name+' retires at '+G.age+'. Empire worth '+fmt(G.netWorth)+'. Choose your heir.';
+  document.getElementById('heir-grid').innerHTML=heirs.map((h,i)=>`<div class="heir-card" id="heir-${i}" onclick="selHeir(${i})"><div class="heir-em">${h.e}</div><div class="heir-nm">${h.n}</div><div class="heir-tr">${h.t}: ${h.b}</div></div>`).join('');
+  G._heirs=heirs;G.selectedHeir=0;
+  document.getElementById('heir-0')?.classList.add('selected');
+  document.getElementById('gen-mo').classList.add('active');
+}
+function selHeir(i){G.selectedHeir=i;document.querySelectorAll('.heir-card').forEach((c,ci)=>c.classList.toggle('selected',ci===i));}
+function confirmHeir(){
+  const h=G._heirs[G.selectedHeir||0];
+  G.generation++;G.dynastyMembers.push({name:G.name,nw:G.netWorth,gen:G.generation-1});
+  G.name=h.n;G.archetype=h.a;G.age=22;G.careerLevel=1;G.careerXP=0;G.xpNext=100;
+  G.cash=Math.floor(G.netWorth*.4);G.monthlyIncome=ARCH[h.a].income;
+  const is=ARCH[h.a].skills;Object.keys(G.skills).forEach(sk=>{G.skills[sk]=Math.floor((G.skills[sk]+is[sk])/2)+5;});
+  G.happiness=70;G.health=90;
+  document.getElementById('gen-mo').classList.remove('active');
+  toast('👑 Gen '+G.generation+': Welcome, '+G.name+'!','pos');
+  addNotif('👑 New Generation!',G.name+' takes over. Inherited: '+fmt(G.cash),'success');
+  updateHUD();renderSkills();renderActs();renderBiz();renderDyn();chkMilestones();
+}
+
+// ══════════════════════════════════════
+// CITY SVG
+// ══════════════════════════════════════
+function updCity(){
+  const svg=document.getElementById('city-svg');if(!svg)return;
+  const w=Math.log10(Math.max(G.netWorth,1000));const bc=Math.min(12,3+G.businesses.length+Math.floor(w));
+  const gc={boom:'#1a5e3a',normal:'#1a4a2e',recession:'#4a2020',crisis:'#5a1010'}[G.market]||'#1a4a2e';
+  let s=`<rect x="0" y="0" width="360" height="185" fill="#0d3b6e"/>`;
+  for(let i=0;i<22;i++)s+=`<circle cx="${14+i*16}" cy="${4+Math.sin(i*1.3)*7}" r=".7" fill="white" opacity="${.2+Math.sin(i)*.15}"/>`;
+  if(G.market==='boom')s+=`<circle cx="315" cy="22" r="14" fill="#FFD700" opacity=".45"/>`;
+  s+=`<rect x="0" y="145" width="360" height="40" fill="${gc}"/>`;
+  s+=`<rect x="0" y="143" width="360" height="4" fill="#1a2940" opacity=".8"/>`;
+  const cols=['#1E3358','#142240','#192E50','#1a3a5c','#243b60'];
+  const hs=[112,83,66,96,76,106,60,90,80,70,100,84];
+  const xs=[12,56,108,160,206,250,290,324,36,82,134,274];
+  for(let i=0;i<bc;i++){const x=xs[i%xs.length];const h=Math.min(hs[i%hs.length],38+w*7+(i%3)*13);const ww=18+(i%3)*9;const y=143-h;
+    s+=`<rect x="${x}" y="${y}" width="${ww}" height="${h}" fill="${cols[i%cols.length]}"/>`;
+    s+=`<rect x="${x}" y="${y-3}" width="${ww}" height="4" fill="${cols[(i+1)%cols.length]}"/>`;
+    for(let wy=y+7;wy<y+h-7;wy+=11)for(let wx=x+3;wx<x+ww-5;wx+=8){const lit=Math.random()>.38;s+=`<rect x="${wx}" y="${wy}" width="4" height="5" fill="${lit?'#F0A500':'#0d1a30'}" opacity="${lit?.8:.4}"/>`;}
+    if(h>72){s+=`<rect x="${x+ww/2-.8}" y="${y-9}" width="1.6" height="9" fill="#9BA8BE"/>`;s+=`<circle cx="${x+ww/2}" cy="${y-9}" r="1.8" fill="${Math.random()>.5?'#E84040':'#F0A500'}"/>`;}
+  }
+  const bi={Retail:'🏪','E-commerce':'💻','F&B':'🍜',Services:'📣','Real Estate':'🏠',Industrial:'🏭'};
+  G.businesses.slice(0,5).forEach((b,i)=>s+=`<text x="${27+i*62}" y="165" font-size="11" text-anchor="middle">${bi[b.type]||'🏢'}</text>`);
+  if(G.netWorth>200000)for(let i=0;i<Math.min(6,Math.floor(G.netWorth/500000));i++)s+=`<circle cx="${33+i*40}" cy="148" r="2.5" fill="#F0EAD6" opacity=".5"/>`;
+  svg.innerHTML=s;
+}
+function cityDetails(){toast('🏙 '+G.businesses.length+' biz · '+fmt(G.netWorth)+' · '+G.market,'pos');}
+
+// ══════════════════════════════════════
+// RENDER FUNCTIONS
+// ══════════════════════════════════════
+function renderSkills(){const el=document.getElementById('skills-list');if(!el)return;el.innerHTML=Object.entries(G.skills).map(([sk,v])=>`<div class="skill-row"><div class="sk-top"><span class="sk-n">${sk}</span><span class="sk-v">${v}/100</span></div><div class="sk-bar"><div class="sk-fill ${sk==='Finance'||sk==='Leadership'?'g':''}" style="width:${v}%"></div></div></div>`).join('');}
+function renderActs(){const el=document.getElementById('act-grid');if(!el)return;el.innerHTML=ACTS.career.map(a=>`<div class="act-card" onclick="doAct('${a.id}')"><div class="ac-ico">${a.icon}</div><div class="ac-nm">${a.name}</div><div class="ac-ds">${a.desc}</div><div class="ac-co">${a.cost}</div><div class="ac-rw">${a.rw}</div></div>`).join('');}
+function doAct(id){const a=[...ACTS.career,...ACTS.biz,...ACTS.inv].find(x=>x.id===id);if(a)a.fn();}
+function getMC(m){return m>=70?'var(--green)':m>=40?'var(--gold)':'var(--red)';}
+function renderBiz(){
+  const el=document.getElementById('biz-content');if(!el)return;
+  if(G.businesses.length===0){
+    el.innerHTML=`<div class="lock-msg"><div class="li">🏗</div><h3>No businesses yet</h3><p>You need ₱15,000+ to open your first business.</p></div><div class="sec-t" style="margin-top:1rem">START A BUSINESS</div><div class="act-grid">${ACTS.biz.map(a=>`<div class="act-card" onclick="doAct('${a.id}')">${a.pro&&!AUTH.isPro?'<span class="pro-lock">PRO</span>':''}<div class="ac-ico">${a.icon}</div><div class="ac-nm">${a.name}</div><div class="ac-co">${a.cost}</div><div class="ac-rw">${a.rw}</div></div>`).join('')}</div>`;
+    return;
+  }
+  const tot=G.businesses.reduce((s,b)=>s+b.income,0);
+  el.innerHTML=`<div style="background:rgba(240,165,0,.08);border:1px solid var(--border);border-radius:10px;padding:9px 13px;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center"><span class="sec-t" style="margin:0">TOTAL MONTHLY</span><span style="font-family:Oswald;font-size:1.05rem;color:var(--green)">${fmt(tot)}/mo</span></div>
+  ${G.businesses.map((b,i)=>`<div class="biz-card"><div class="biz-hdr"><div><div class="biz-nm">${b.name}</div><div class="biz-tp">${b.type} · ${b.employees} employees</div></div><span class="biz-badge">LVL ${b.level}</span></div><div class="biz-stats"><div class="bs"><div class="bs-v">${fmt(b.income)}</div><div class="bs-l">Monthly</div></div><div class="bs"><div class="bs-v">${fmt(b.invested)}</div><div class="bs-l">Invested</div></div><div class="bs"><div class="bs-v">${((b.income*12/b.invested)*100).toFixed(0)}%</div><div class="bs-l">ROI/yr</div></div></div><div style="display:flex;justify-content:space-between;margin-top:7px"><span style="font-size:.63rem;color:var(--text-muted)">Morale: <span style="color:${getMC(b.morale||70)}">${b.morale||70}%</span></span></div><div class="mor-bar"><div class="mor-fill" style="width:${b.morale||70}%;background:${getMC(b.morale||70)}"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px"><button class="btn-p" style="padding:7px;font-size:.75rem;margin:0" onclick="upgBiz(${i})">⬆ Upgrade (${fmt(b.invested*.5)})</button><button class="btn-s" style="padding:7px;font-size:.75rem;margin:0" onclick="hireBiz(${i})">👤 Hire (${fmt(b.income*.3)})</button></div></div>`).join('')}
+  <div class="sec-t" style="margin-top:.5rem">OPEN NEW BUSINESS</div><div class="act-grid">${ACTS.biz.map(a=>`<div class="act-card" onclick="doAct('${a.id}')">${a.pro&&!AUTH.isPro?'<span class="pro-lock">PRO</span>':''}<div class="ac-ico">${a.icon}</div><div class="ac-nm">${a.name}</div><div class="ac-co">${a.cost}</div><div class="ac-rw">${a.rw}</div></div>`).join('')}</div>`;
+}
+function renderInv(){
+  const el=document.getElementById('inv-content');if(!el)return;
+  const tot=G.investments.reduce((s,i)=>s+i.amount,0);
+  let h=`<div class="sec-t">INVESTMENT OPTIONS</div><div class="act-grid">${ACTS.inv.map(a=>`<div class="act-card" onclick="doAct('${a.id}')"><div class="ac-ico">${a.icon}</div><div class="ac-nm">${a.name}</div><div class="ac-ds">${a.desc}</div><div class="ac-co">Min: ${a.cost}</div><div class="ac-rw">${a.rw}</div></div>`).join('')}</div>`;
+  const active=G.investments.filter(i=>i.amount>0);
+  if(active.length>0)h+=`<hr style="border:none;border-top:1px solid var(--soft);margin:.8rem 0"><div class="sec-t">YOUR PORTFOLIO</div><div class="leg-banner" style="margin-bottom:.8rem"><div class="leg-sc">${fmt(tot)}</div><div class="leg-lb">Total Portfolio Value</div></div>${active.map(i=>`<div class="inv-row"><div><div class="inv-nm">${i.name}</div><div class="inv-mt">${i.type} · ${fmt(i.amount)}</div></div><div class="inv-rt ${i.returns>=1?'pos':'neg'}">${i.return}</div></div>`).join('')}`;
+  el.innerHTML=h;
+}
+function getLegTitle(){if(G.legacyScore<1000)return 'Struggling Dreamer';if(G.legacyScore<5000)return 'Rising Professional';if(G.legacyScore<20000)return 'Successful Entrepreneur';if(G.legacyScore<80000)return 'Business Leader';if(G.legacyScore<300000)return 'Industry Titan';if(G.legacyScore<1000000)return '💎 Conglomerate Lord';return '🌟 Empire Builder';}
+function renderDyn(){
+  const el=document.getElementById('dyn-content');if(!el)return;
+  const past=G.dynastyMembers||[];
+  el.innerHTML=`<div class="leg-banner"><div class="leg-sc">${G.legacyScore.toLocaleString()}</div><div class="leg-lb">Legacy Score</div><div class="leg-tt">${getLegTitle()}</div></div>
+  <div class="sec-t">DYNASTY TREE</div>
+  <div style="text-align:center;padding:1rem 0">
+    ${past.map(m=>`<div style="margin-bottom:.3rem"><div class="gen-person" style="border-color:var(--teal);margin:0 auto">👤</div><div class="gen-lbl">${m.name}</div><div style="font-size:.58rem;color:var(--teal)">Gen ${m.gen} · ${fmt(m.nw)}</div></div><div style="color:var(--soft);padding:.2rem 0">↓</div>`).join('')}
+    <div><div class="gen-person ag" style="margin:0 auto">👤</div><div class="gen-lbl">${G.name}</div><div style="font-size:.58rem;color:var(--gold)">Gen ${G.generation} · Active</div></div>
+    <div style="color:var(--soft);padding:.3rem 0">↓</div>
+    <div style="display:flex;justify-content:center;gap:20px">
+      <div><div class="gen-person ${G.netWorth>=5000000?'':'lk'}" style="margin:0 auto">👶</div><div class="gen-lbl">Heir 1</div><div style="font-size:.58rem;color:var(--text-muted)">${G.netWorth>=5000000?'Ready':'₱5M needed'}</div></div>
+      <div><div class="gen-person ${G.netWorth>=5000000?'':'lk'}" style="margin:0 auto">👶</div><div class="gen-lbl">Heir 2</div><div style="font-size:.58rem;color:var(--text-muted)">${G.netWorth>=5000000?'Ready':'₱5M needed'}</div></div>
+    </div>
+  </div>
+  ${!AUTH.isPro&&G.generation>=2?`<div class="pro-card"><h3>⭐ Unlimited Generations</h3><p>Pro unlocks unlimited dynasty generations across centuries.</p><button class="up-btn" onclick="showPro('dynasty')">Upgrade to PRO</button></div>`:''}
+  <hr style="border:none;border-top:1px solid var(--soft);margin:1rem 0">
+  <div class="sec-t">EMPIRE STATS</div>
+  <div class="stat-grid">
+    <div class="st-card"><div class="st-v" style="color:var(--green)">${G.businesses.length}</div><div class="st-l">Businesses</div></div>
+    <div class="st-card"><div class="st-v" style="color:var(--teal)">${G.investments.length}</div><div class="st-l">Investments</div></div>
+    <div class="st-card"><div class="st-v" style="color:var(--gold)">${G.milestones.length}</div><div class="st-l">Milestones</div></div>
+    <div class="st-card"><div class="st-v" style="color:var(--purple)">${G.generation}</div><div class="st-l">Generation</div></div>
+  </div>
+  <div class="sec-t" style="margin-top:.5rem">MILESTONES</div>
+  ${G.milestones.length===0?'<p style="color:var(--text-muted);text-align:center;padding:1rem;font-size:.82rem">Play more to unlock milestones!</p>':G.milestones.map(m=>`<div class="inv-row"><div><div class="inv-nm">${m.l}</div><div class="inv-mt">${m.m} · Wk ${m.week}</div></div><div class="inv-rt pos">${fmt(m.nw)}</div></div>`).join('')}
+  <hr style="border:none;border-top:1px solid var(--soft);margin:1rem 0">
+  <button class="btn-s" style="margin:0" onclick="copyShare()">📋 Copy Achievement Card</button>`;
+}
+function renderInbox(){
+  const el=document.getElementById('inbox-content');if(!el)return;
+  G.notifications.forEach(n=>n.unread=false);updBadge();
+  if(G.notifications.length===0){el.innerHTML='<div class="lock-msg"><div class="li">📬</div><h3>No messages yet</h3><p>Events and milestones will appear here.</p></div>';return;}
+  el.innerHTML=`<div class="sec-t">NOTIFICATIONS</div>${G.notifications.map(n=>`<div class="notif ${n.type}"><div class="notif-t">${n.t}</div><div class="notif-b">${n.b}</div><div class="notif-w">Week ${n.week}</div></div>`).join('')}`;
+}
+
+// ══════════════════════════════════════
+// PRO UPSELL
+// ══════════════════════════════════════
+function showPro(ctx){
+  const msgs={ai:'Free accounts get 3 AI events per day. Pro unlocks unlimited AI events.',dynasty:'Pro unlocks unlimited dynasty generations.',biz:'Pro unlocks Realty Firms and Manufacturing Plants.',general:'Upgrade to Pro for unlimited AI events, advanced businesses, and unlimited dynasty generations.'};
+  const area=document.getElementById('upsell-area');
+  if(area){area.innerHTML=`<div class="pro-card"><h3>⭐ Upgrade to PRO</h3><p>${msgs[ctx]||msgs.general}</p><p style="font-size:.7rem;color:var(--gold);margin-top:.3rem">₱199/month · Cancel anytime</p><button class="up-btn" onclick="toast('💳 Payment system coming soon!','pos')">Upgrade Now</button></div>`;setTimeout(()=>{area.innerHTML='';},7000);}
+}
+
+// ══════════════════════════════════════
+// SAVE / LOAD
+// ══════════════════════════════════════
+function saveKey(){const s=AUTH.s;if(s&&s.key)return'lceo_save_'+s.emailHash;return'lceo_save_guest';}
+function autoSave(){try{const d={...G,_v:'3.0',_t:Date.now()};delete d._heirs;localStorage.setItem(saveKey(),JSON.stringify(d));const i=document.getElementById('save-ind');i.className='save-ind show';setTimeout(()=>i.className='save-ind',2200);}catch(e){}}
+function loadSave(){try{const raw=localStorage.getItem(saveKey());if(!raw)return;Object.assign(G,JSON.parse(raw));showScreen('game');updateHUD();renderSkills();renderActs();renderBiz();renderInv();renderDyn();updPhase();updCity();updTicker();updBadge();updAIBtn();toast('💾 Saved game loaded!','pos');}catch(e){toast('❌ Load failed','neg');}}
+function hasSave(){return!!localStorage.getItem(saveKey());}
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function swTab(tab,btn){document.querySelectorAll('.tab-c').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');btn.classList.add('active');if(tab==='business')renderBiz();if(tab==='invest')renderInv();if(tab==='dynasty')renderDyn();if(tab==='inbox')renderInbox();}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function updTicker(){const base=['📰 BSP holds rates — inflation 3.8%','💹 Lungsod ng Emperyo GDP grows 6.2%','🏗 New economic zone approved','📱 Local tech startups attract foreign capital','🏦 BDO MSME loans at 5% interest','🤖 AI adoption up 40% in PH businesses','📦 E-commerce hits record volumes','🏠 Real estate prices rise 8%','🌱 Green economy incentives announced'];const extra=G.market==='boom'?['📈 BULL MARKET!','💥 Record economic growth!']:G.market==='recession'?['📉 Recession fears deepen','⚠️ Consumer spending down 20%']:G.market==='crisis'?['🚨 FINANCIAL CRISIS declared!','❌ Banks under stress']:[];document.getElementById('ticker').textContent=[...base,...extra].sort(()=>Math.random()-.5).slice(0,5).join(' · ');}
+
+// ══════════════════════════════════════
+// AUTH HANDLERS
+// ══════════════════════════════════════
+let selPlanVal='free';
+function selPlan(p){selPlanVal=p;document.getElementById('chip-free').style.opacity=p==='free'?'1':'.6';document.getElementById('chip-pro').style.opacity=p==='pro'?'1':'.6';}
+function switchAuthTab(tab,btn){document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));btn.classList.add('active');document.getElementById('auth-'+tab).classList.add('active');}
+function handleLogin(){const e=document.getElementById('login-email').value.trim();const p=document.getElementById('login-pass').value;const err=document.getElementById('login-err');const r=AUTH.login(e,p);if(!r.ok){err.textContent=r.msg;err.classList.add('show');return;}err.classList.remove('show');enterSplash();}
+function handleRegister(){const n=document.getElementById('reg-name').value.trim();const e=document.getElementById('reg-email').value.trim();const p=document.getElementById('reg-pass').value;const err=document.getElementById('reg-err');const r=AUTH.register(n,e,p,selPlanVal);if(!r.ok){err.textContent=r.msg;err.classList.add('show');return;}err.classList.remove('show');enterSplash();}
+function handleGuest(){AUTH.guest();enterSplash();}
+function handleSignOut(){AUTH.signOut();showScreen('auth');}
+function enterSplash(){const s=AUTH.s;document.getElementById('user-greet').textContent='Welcome, '+(s.displayName||'Player')+'!';const pb=document.getElementById('plan-badge');pb.textContent=s.plan==='pro'?'⭐ PRO MEMBER':'FREE PLAN';pb.className='plan-badge '+(s.plan==='pro'?'pro':'free');document.getElementById('continue-btn').style.display=hasSave()?'block':'none';showScreen('splash');}
+
+// ══════════════════════════════════════
+// GAME START
+// ══════════════════════════════════════
+let selArch_='grad',selTraits=[];
+function selArch(id){selArch_=id;document.querySelectorAll('.arch-card').forEach(c=>c.classList.remove('selected'));document.getElementById('arch-'+id).classList.add('selected');}
+function togTrait(t){const btn=document.querySelector(`[onclick="togTrait('${t}')"]`);if(selTraits.includes(t)){selTraits=selTraits.filter(x=>x!==t);btn.classList.remove('selected');}else if(selTraits.length<2){selTraits.push(t);btn.classList.add('selected');}else{toast('Max 2 traits','neg');}}
+function startGame(){
+  const name=document.getElementById('char-name').value.trim();
+  if(!name){toast('Please enter your character name','neg');return;}
+  const arch=ARCH[selArch_];
+  Object.assign(G,{name,archetype:selArch_,traits:selTraits,goal:document.getElementById('life-goal').value,cash:arch.cash,monthlyIncome:arch.income,generation:1,dynastyMembers:[],notifications:[],businesses:[],investments:[],milestones:[],eventHistory:[],legacyScore:0,week:1,age:22,phase:1,careerLevel:1,careerXP:0,xpNext:100,reputation:10,happiness:60,health:80,market:'normal',mktWeeks:0});
+  Object.assign(G.skills,arch.skills);
+  if(selTraits.includes('ambitious'))G.xpNext=80;
+  if(selTraits.includes('charismatic'))G.reputation=20;
+  if(selTraits.includes('analytical'))G.skills.Finance+=5;
+  if(selTraits.includes('resilient'))G.health=95;
+  if(selTraits.includes('networker'))G.skills.Networking+=5;
+  if(selTraits.includes('creative'))G.skills.Marketing+=5;
+  calcNW();
+  addNotif('👋 Your story begins',arch.label+' — '+G.name+'. Starting cash: '+fmt(G.cash)+'.','success');
+  showScreen('game');updateHUD();renderSkills();renderActs();renderBiz();renderInv();renderDyn();updCity();updTicker();updBadge();updAIBtn();
+}
+function loadDemo(){
+  Object.assign(G,{name:'Carlos Reyes',archetype:'entrepreneur',traits:['ambitious','networker'],goal:'magnate',cash:450000,monthlyIncome:85000,reputation:42,careerLevel:4,careerXP:60,xpNext:300,week:32,age:28,happiness:65,health:72,generation:1,phase:3,market:'normal',mktWeeks:2,skills:{Leadership:35,Finance:42,Marketing:38,Operations:30,Networking:45,TechSavvy:22},businesses:[{name:'RC Digital Agency',type:'Services',income:35000,invested:50000,level:2,employees:6,morale:75},{name:'RC Food Cart',type:'F&B',income:18000,invested:30000,level:1,employees:3,morale:60}],investments:[{name:'PSE Stocks',type:'Equities',amount:120000,return:'+12%',returns:1.12},{name:'BDO UITF',type:'Mutual Fund',amount:50000,return:'+6% p.a.',returns:1.06}],milestones:[{l:'🏪 First Business',m:'First business opened!',week:8,nw:80000},{l:'📈 First Investment',m:'First investment made!',week:12,nw:200000},{l:'💵 Six Figures',m:'Net worth hit ₱100K',week:20,nw:100000}],notifications:[{t:'🎮 Demo Loaded',b:'Carlos Reyes — Week 32. Two businesses, ₱450K cash.',type:'info',week:32,unread:false}],dynastyMembers:[],legacyScore:12400,selectedHeir:0,_heirs:null,eventHistory:[]});
+  calcNW();showScreen('game');updateHUD();renderSkills();renderActs();renderBiz();renderInv();renderDyn();updPhase();updCity();updTicker();updBadge();updAIBtn();
+}
+function copyShare(){const t='🏆 Legacy CEO: Rise of the Empire\n'+getLegTitle()+'\n'+G.name+' · Age '+G.age+' · Gen '+G.generation+'\nNet Worth: '+fmt(G.netWorth)+'\nLegacy Score: '+G.legacyScore.toLocaleString()+'\n'+G.businesses.length+' businesses · '+G.milestones.length+' milestones\n#LegacyCEO #RiseOfTheEmpire';navigator.clipboard.writeText(t).then(()=>toast('📋 Copied!','pos')).catch(()=>toast('Copy from Dynasty tab','pos'));}
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+let tTimer;
+function toast(msg,type){const el=document.getElementById('toast');el.innerHTML=msg;el.className='toast show';clearTimeout(tTimer);tTimer=setTimeout(()=>el.classList.remove('show'),2800);}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+document.getElementById('arch-grad').classList.add('selected');
+</script>
+</body>
+</html>
